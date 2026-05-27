@@ -30,7 +30,6 @@ OUTPUT <- file.path("output")
 OUTPUT_FIGURES <- file.path(OUTPUT, "figures")
 
 # Run code -----------------------------------------------------------------------------
-source("R/realized_mt.R", echo = T)
 source("R/standard_errors.R", echo = T)
 source("R/green_tilts.R", echo = T)
 source("R/random_gs.R", echo = T)
