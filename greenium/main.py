@@ -1405,7 +1405,6 @@ def realized_ret_hist():
     plt.close()
 
     return None
-realized_ret_hist()
 
 # Two-sample Kolmogorov-Smirnov test comparing published t-stats vs replicated t-stats
 ks_stat, p_value = ks_2samp(df_pub['t_stat'], all_tstat)
@@ -1482,7 +1481,6 @@ def ks_test():
         plt.savefig(OUTPUT_FIGURES_GLOBAL / "ks_test_ecdf.pdf", format="pdf", bbox_inches="tight")
         plt.show()
         plt.close()
-ks_test()
 
 
 
@@ -3888,7 +3886,6 @@ def plot_gmb_ret_us():
         plt.show()
 
     return None
-plot_gmb_ret_us()
 
 # figure 1 panel b-c
 def fig_1_bc_old():
@@ -4321,7 +4318,6 @@ def replication_tables():
 
 
     return None
-replication_tables()
 
 # print US and global mean green score spreads using VW and VW cap weights
 print('Green score spreads and validation...')
