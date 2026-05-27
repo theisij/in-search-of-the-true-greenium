@@ -1,0 +1,47 @@
+# Virtual‐env and caches
+.venv/ 
+__pycache__/
+*.py[cod]
+
+# IDE settings
+.idea/
+*.iml
+.vscode/
+
+# uv artifacts (reproducible via uv sync)
+# —keep uv.lock but ignore the private install folder if you ever vendored it
+# .python-version is fine to commit, but if you vendor installs you’d ignore .venv/
+
+# Data blobs (don’t commit large .pkl/.csv)
+*.pkl
+*.csv
+*.parquet
+
+# Backup or temp files
+*~ 
+*.bak
+Old/
+
+# ignore everything in these folders...
+/data/raw/*
+/data/interim/*
+/data/processed/*
+/output/figures/*
+/output/tables/*
+/output/old_versions/*
+/logs/*
+
+# …except “.gitkeep” placeholders…
+!/data/raw/.gitkeep
+!/data/interim/.gitkeep
+!/data/processed/.gitkeep
+!/output/figures/.gitkeep
+!/output/figures/des_stats/.gitkeep
+!/output/figures/global/.gitkeep
+!/output/figures/us/.gitkeep
+!/output/figures/maps/.gitkeep
+!/output/tables/.gitkeep
+!/output/tables/des_stats/.gitkeep
+!/output/tables/global/.gitkeep
+!/output/tables/us/.gitkeep
+!/logs/.gitkeep
