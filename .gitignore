@@ -1,6 +1,7 @@
 # Virtual‐env and caches
 .venv/
 .mplconfig/
+Rplots.pdf
 __pycache__/
 *.py[cod]
 
@@ -46,3 +47,4 @@ Old/
 !/output/tables/global/.gitkeep
 !/output/tables/us/.gitkeep
 !/logs/.gitkeep
+!/logs/verification-*.md
