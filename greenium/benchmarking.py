@@ -395,6 +395,7 @@ def agg_indv_plot(results_tidy, green_vars, green_vars_dict):
 
     return fig
 
+def df_impute_balanced(df, agg_var, indv_vars, gvars, ctrls, y, start):
     df_input = (
         pl.from_pandas(df[['id', 'date', 'gics', 'excntry', 'country_ym_num']+[y]+ctrls+gvars])
         .lazy()
