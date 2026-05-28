@@ -85,8 +85,6 @@ except FileNotFoundError:
     df, df_bonds, holdings_agg, holdings_agg_bf = load_all_data()
 
 #### NOTE: code includes plt.close("all") throughout in order to automatically close outputs created; can be deleted
-# df = df[df.date>=global_start]
-# df_bonds = df_bonds[df_bonds.date>=global_start]
 
 # esg variable summary statistics (before standardizing)
 desc_table(
@@ -2859,53 +2857,4 @@ def green_score_spreads(df_us, df):
 
     return None
 green_score_spreads(df[df.excntry=="USA"], df)
-
-# benjamini-hochberg multiple testing adjustment
-# inspect = pd.concat([ret_vwcap.loc[to_test], ret_vwcap_indn.loc[to_test]], axis=0)
-# inspect = inspect[['p_a_q5', 'p_a_ff6', 'p_a_ff3', 'p_a_capm', 'p_exc_ret']].melt().sort_values('value').dropna()
-# inspect['factor_count'] = 1
-# inspect['factor_count'] = inspect['factor_count'].cumsum()
-# inspect['bh_adj'] = 0.05 * inspect['factor_count'] / len(inspect)
-# inspect['sign'] = inspect['value'] <= inspect.bh_adj
-# inspect = inspect.reset_index(drop=True)
-# print(inspect[inspect['sign']].index.max() + 1)  # number of significant factors
-# import scipy
-# -scipy.stats.norm.ppf(inspect.iloc[inspect[inspect['sign']].index.max()]['bh_adj'] / 2)
-# from statsmodels.stats.multitest import multipletests
-# multipletests(inspect['value'], method='fdr_bh')[0]  # [1] gives adjusted pval
-
-########
-# i = 'green_score'
-# temp_data = df[(df[i].notna()) & (df.excntry=="USA")]
-# temp_data = temp_data[temp_data.ret_exc_lead1m.notna()]
-
-# # Requiring minimum number of observations but otherwise using full time series available
-# number_obs = temp_data.groupby(['date'], observed=False)[i].count().reset_index()
-# number_obs = number_obs[number_obs[i] >= 100]  # at least 100 observations
-# temp_data = temp_data[temp_data.date.isin(number_obs.date)]
-
-# # vw
-# temp_data['esg_rank'] = temp_data.groupby(['date'], observed=False)[i].rank(pct=True)
-# temp_data['tercile_esg'] = temp_data.groupby(['date'], observed=False)['esg_rank'].transform(
-#     lambda x: pd.cut(x, 3, retbins=False, labels=[1, 2, 3]))
-
-# # Exclude grouping columns when applying the function
-# gmb_factor = temp_data.groupby(['date', 'tercile_esg'], observed=False)[
-#     ['date', 'tercile_esg', 'ret_exc_lead1m', 'me_cap']].apply(
-#     lambda x: (x['ret_exc_lead1m'] * x['me_cap']).sum() / x['me_cap'].sum()).unstack(level=1)
-
-# gmb_factor = gmb_factor[3] - gmb_factor[1]
-
-# # Off-setting index by 1 month due to returns being 1 month forward
-# gmb_factor.index = gmb_factor.index + pd.DateOffset(months=1) + pd.offsets.MonthEnd(0)
-# gmb_factor.describe()
-# 1.49052*12**0.5
-
-# ####
-# test_1_10 = df[df.q_1_10==1].groupby(['date'], observed=False)[['date', 'green_score', 'me_cap']].apply(
-#     lambda x: (x['green_score'] * x['me_cap']).sum() / x['me_cap'].sum())
-# test_10_10 = df[df.q_10_10==1].groupby(['date'], observed=False)[['date', 'green_score', 'me_cap']].apply(
-#     lambda x: (x['green_score'] * x['me_cap']).sum() / x['me_cap'].sum())
-# test_1_10.mean()
-# test_10_10.mean()
 
