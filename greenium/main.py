@@ -10,8 +10,6 @@ import pandas as pd
 import polars as pl
 import statsmodels.api as sm
 from linearmodels.panel import PanelOLS  #, compare
-from scipy.interpolate import interp1d
-from scipy.stats import t
 from stargazer.stargazer import Stargazer
 
 from greenium.aggregate_green_score import (
