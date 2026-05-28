@@ -95,11 +95,10 @@ def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy,
     df = df.drop(['total_esg_score_x', 'total_esg_score_y', 'environment_score_x', 'environment_score_y'], axis=1)
 
 
-    # frontfilling msci/sustainalytics/tri info 1 year (using id as opposed to id because unique and global data)
+    # frontfilling msci/sustainalytics info 1 year (using id as opposed to id because unique and global data)
     df = df.sort_values(['id', 'date'])
     for col in ['industry_esg_score', 'weighted_esg_score', 'e_score', 'greenness',
-                'e_climate_score', 'e_natres_score', 'e_waste_score', 'e_envopps_score',
-                'release_total_sales', 'prod_waste_total_sales', 'release_total_assets', 'prod_waste_total_assets']:
+                'e_climate_score', 'e_natres_score', 'e_waste_score', 'e_envopps_score']:
         df[col] = df.groupby(['id'])[col].fillna(method='ffill', limit=11)
 
     # define factors
