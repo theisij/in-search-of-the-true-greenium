@@ -1,6 +1,4 @@
 # Packages -----------------------------------------------------------------------------
-# library(furrr)
-# library(fwildclusterboot)
 library(lfe)
 library(tidyverse)
 library(data.table)
@@ -137,7 +135,6 @@ if (FALSE) {
         new <- new[sub, on = "gics"]
         new[, green_score := green_score*r]
         c("0", "date", "id", "gics", "date+id", "date+gics") |> map(function(cl) {
-          # form <- paste0("icc_avg ~ green_score + beta_252d + ebit_at + netdebt_at | date | 0 | ", cl) |> as.formula()
           form <- paste0("icc_avg ~ green_score | date | 0 | ", cl) |> as.formula()
           felm(form, data=new) |> broom::tidy() |> mutate(clusters=cl)
         }) |> bind_rows() |> mutate(s=s)

@@ -1,6 +1,5 @@
 # Packages -----------------------------------------------------------------------------
 library(arrow)
-# library(furrr) # Not used currently
 library(lfe)
 library(broom)
 library(tidyverse) 

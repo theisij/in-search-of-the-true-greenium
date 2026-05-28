@@ -105,8 +105,6 @@ if (FALSE) {
 data[, score_rnd := NULL]
 
 # Random estimate distribution -------------------------------------------------
-# felm(icc_avg ~ score_rnd   + beta_252d + ebit_at + netdebt_at + log_be | country_date | 0 | date + gics, data = data[country=="global"]) |> broom::tidy() |> filter(term == "score_rnd")
-# felm(icc_avg ~ green_score + beta_252d + ebit_at + netdebt_at + log_be | country_date | 0 | date + gics, data = data[country=="global"]) |> broom::tidy() |> filter(term == "green_score")
 base_est_reg <- felm(icc_avg ~ green_score + beta_252d + ebit_at + netdebt_at + log_be | country_date | 0 | date + gics, data = data[country=="global"])
 base_est <- coef(base_est_reg)["green_score"]
 base_est_t <- summary(base_est_reg)$coefficients["green_score", "t value"]
@@ -337,7 +335,6 @@ separate_regs |>
     sig_bh = if_else(p_rank_perc <= max_sig, "significant", "insignificant") |> factor(levels = c("significant", "insignificant")),
     type = if_else(score=="green_score", "main_score", "other")
   ) |> 
-  # ggplot(aes(x = reorder(score, p.value), y = p.value, color = sig_bh)) +
   ggplot(aes(x = p_rank_perc, y = p.value, color = sig_bh, shape = type)) +
   geom_point(size=2) + 
   geom_abline(slope=0.05, intercept=0, linetype="dashed") +
@@ -385,7 +382,6 @@ arrows_df <- data.frame(
 )
 
 # Calculate positions for the arrows and labels
-# y_max <- max(test$p.value)
 arrows_df <- arrows_df %>%
   mutate(
     y_start = 0.2,               # Starting point of the arrow
