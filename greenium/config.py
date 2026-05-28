@@ -46,10 +46,9 @@ emission_factors = ['scope1int_sales', 'scope12int_sales', 'scope123int_sales',
 msci_factors = ['industry_esg_score', 'weighted_esg_score', 'e_score', 'greenness',
                 'e_climate_score', 'e_natres_score', 'e_waste_score', 'e_envopps_score']
 sust_factors = ['total_esg_score', 'environment_score']
-tri_factors = ['release_total_sales', 'prod_waste_total_sales', 'release_total_assets', 'prod_waste_total_assets']
 
 # choosing main factors to test (including BK's total emissions in return analysis, but excluding later in ICC etc.)
-to_test = total_em_factors + emission_factors + msci_factors + sust_factors + tri_factors
+to_test = total_em_factors + emission_factors + msci_factors + sust_factors
 to_test_g = total_em_factors + emission_factors + msci_factors + sust_factors
 
 # name of factors for outputs

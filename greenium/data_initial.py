@@ -18,11 +18,11 @@ from greenium.config import (
     set_start_morningstar,
 )
 from greenium.expected_returns import bond_data, market_data, options_er, subjective
-from greenium.green_measures import isin_gvkey_load, msci, sustainalytics, tri, trucost
+from greenium.green_measures import isin_gvkey_load, msci, sustainalytics, trucost
 
 
 # merge data and then clean
-def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, df_tri,
+def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy,
                     df_icc, df_ms, df_vl, df_valrat, df_subj_er, df_options_glb, df_options_mwb):
 
     # adding sales/assets/MV info to trucost using fiscal date + 4 months (same lag as in JKP)
@@ -94,20 +94,6 @@ def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, 
 
     df = df.drop(['total_esg_score_x', 'total_esg_score_y', 'environment_score_x', 'environment_score_y'], axis=1)
 
-    #adding TRI data - merging sales/assets from Compustat in April each year
-    df_tri = df_tri.merge(df.drop_duplicates(['gvkey', 'date', 'sales'], keep='first')[['gvkey', 'date', 'sales', 'assets']], how='left', on=['gvkey', 'date'])
-    df_tri = df_tri[df_tri.sales > 0]
-    df_tri = df_tri[df_tri.assets > 0]
-    for i in ['release_total', 'prod_waste_total']: #calculating intensity measures
-        sales_string = i+"_sales"
-        df_tri[sales_string] = (df_tri[i] / df_tri['sales']) / 100
-        asset_string = i+"_assets"
-        df_tri[asset_string] = (df_tri[i] / df_tri['assets']) / 100
-
-    df_tri['YEAR'] = df_tri.date.dt.year
-    df_tri['date'] = pd.to_datetime((df_tri.YEAR + 1).astype(str).str[0:4] + "-09-30")  # merge date (date-time in September following year)
-
-    df = df.merge(df_tri[['gvkey', 'date', 'release_total_sales', 'prod_waste_total_sales', 'release_total_assets', 'prod_waste_total_assets']], how='left', on=['gvkey', 'date'])
 
     # frontfilling msci/sustainalytics/tri info 1 year (using id as opposed to id because unique and global data)
     df = df.sort_values(['id', 'date'])
@@ -127,9 +113,7 @@ def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, 
 
     sust_factors = ['total_esg_score', 'environment_score']
 
-    tri_factors = ['release_total_sales', 'prod_waste_total_sales', 'release_total_assets', 'prod_waste_total_assets']
-
-    to_test = total_em_factors + emission_factors + msci_factors + sust_factors + tri_factors
+    to_test = total_em_factors + emission_factors + msci_factors + sust_factors
 
     # removing esg info in months where the number of observations is low
     min_obs = 100  # number of observations required in a given month for a given ESG variable
@@ -176,7 +160,7 @@ def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, 
 
     # winsorizing cross-sectionally by month
     def winsorize_group(group):
-        for variable in emission_factors + tri_factors + ['be_me', 'debt_at',
+        for variable in emission_factors + ['be_me', 'debt_at',
                                              'ep_fwd0', 'ep_fwd1', 'ep_fwd2', 'ep_fwd0_all', 'ep_fwd1_all', 'ep_fwd2_all',
                                              'ebit_at', 'bev_mev', 'ni_me', 'ebitda_mev',
                                              'ret_12_1', 'beta_252d', 'cash_at', 'netdebt_at',
@@ -262,10 +246,8 @@ def prepare_save_data(df, df_bonds):
 
     sust_factors = ['total_esg_score', 'environment_score']
 
-    tri_factors = ['release_total_sales', 'prod_waste_total_sales', 'release_total_assets', 'prod_waste_total_assets']
-
     # All ESG factors
-    to_test = total_em_factors + emission_factors + msci_factors + sust_factors + tri_factors
+    to_test = total_em_factors + emission_factors + msci_factors + sust_factors
 
     # removing esg information for months where number of observations is low
     min_obs = 100  # number of observations required in a given month for a given ESG variable
@@ -296,8 +278,6 @@ def load_all_data():
     print("Trucost data loaded")
     df_sust_indicator, df_sust_legacy = sustainalytics()
     print("Sustainalytics data loaded")
-    df_tri = tri()
-    print("EPA TRI data loaded")
     df = market_data()
     print("Market data loaded")
     df_bonds = bond_data()
@@ -308,7 +288,7 @@ def load_all_data():
     print("Option data loaded")
 
     # combined data
-    df = merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, df_tri,
+    df = merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy,
                          df_icc, df_ms, df_vl, df_valrat, df_subj_er, df_options_glb, df_options_mwb)
     print("Main data combined and cleaned")
 

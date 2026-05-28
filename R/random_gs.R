@@ -26,9 +26,7 @@ esg_cols <- c("log_scope1tot", "log_scope12tot", "log_scope123tot",
               "industry_esg_score", "weighted_esg_score", "e_score", 
               "greenness", "e_climate_score", "e_natres_score", 
               "e_waste_score", "e_envopps_score", "total_esg_score", 
-              "environment_score", "release_total_sales", 
-              "prod_waste_total_sales", "release_total_assets", 
-              "prod_waste_total_assets")
+              "environment_score")
 # Exclude non-included columns
 if (FALSE) {
   esg_cols <- c("scope1int_sales", "scope12int_sales", "scope123int_sales", 

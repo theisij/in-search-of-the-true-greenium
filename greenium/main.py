@@ -66,7 +66,6 @@ from greenium.config import (
     to_test_g_dict,
     to_test_g_names,
     total_em_factors,
-    tri_factors,
 )
 from greenium.data_initial import load_all_data
 from greenium.utils import desc_table
@@ -96,7 +95,7 @@ desc_table(
 )
 
 # Signing factors consistently such that they all reflect greenness
-for i in (total_em_factors + emission_factors + tri_factors):
+for i in (total_em_factors + emission_factors):
     df[i] = -df[i]
 
 # Estimate individual greeniums before they are standardized
@@ -137,10 +136,6 @@ raw_indv_greeniums(df=df, y='icc_avg', ctrls=MAIN_CONTROLS, gvars=to_test_g,
 
 # Create standardized measures greeness measures 
 def prepare_indv_esg(df):
-    # ensuring EPA TRI data is US only
-    for i in tri_factors:
-        df.loc[df['excntry'] != 'USA', i] = np.nan
-
     # creating average measures for each of the three green score components
     df['trucost_avg'] = df[emission_factors].mean(axis=1) #average of 6 trucost measures
     df['msci_avg'] = df[['weighted_esg_score', 'e_score']].mean(axis=1) #average of 2 msci measures
@@ -579,7 +574,7 @@ des_plots()
 
 # Exporting basic data (US and Global ex-US separately), for use in R
 df.to_parquet(DATA_PROCESSED / "df_full.parquet")
-df[(df.green_score.notna()) & (df.excntry=="USA")][['date', 'id', 'excntry', 'me', 'ret_exc_lead1m', 'gics', 'icc_avg', 'beta_252d', 'ebit_at', 'netdebt_at', 'log_be', 'green_score']+total_em_factors+emission_factors+msci_factors+sust_factors+tri_factors].to_csv(DATA_PROCESSED / "df_us.csv")
+df[(df.green_score.notna()) & (df.excntry=="USA")][['date', 'id', 'excntry', 'me', 'ret_exc_lead1m', 'gics', 'icc_avg', 'beta_252d', 'ebit_at', 'netdebt_at', 'log_be', 'green_score']+total_em_factors+emission_factors+msci_factors+sust_factors].to_csv(DATA_PROCESSED / "df_us.csv")
 df[(df.green_score.notna()) & (df.excntry!="USA")][['date', 'id', 'excntry', 'me', 'ret_exc_lead1m', 'gics', 'icc_avg', 'beta_252d', 'ebit_at', 'netdebt_at', 'log_be', 'green_score']+total_em_factors+emission_factors+msci_factors+sust_factors].to_csv(DATA_PROCESSED / "df_gexus.csv")
 
 
