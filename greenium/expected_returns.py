@@ -1,5 +1,4 @@
 # importing packages and paths
-#from config import *
 import zipfile
 
 import numpy as np
@@ -161,7 +160,6 @@ def market_data():
     # requiring gvkey
     df = df[df.gvkey.notna()]
 
-    # df.permno = df.permno.astype(int)
     df.gvkey = df.gvkey.astype(int)
     df['year'] = df['eom'].astype(str).str[0:4].astype(int)
     df['month'] = df['eom'].astype(str).str[4:6].astype(int)
@@ -241,7 +239,6 @@ def market_data():
 
     df = df.merge(country_list[['Region', 'Continent', 'Country', 'excntry']], how='left', on=['excntry'])
 
-    #df.to_pickle("market_data.pkl")
 
     return df
 
@@ -263,7 +260,6 @@ def bond_data():
     df_bonds = df_bonds[df_bonds.debt_fv.notna()]
 
     df_bonds = df_bonds.dropna(subset=['rating_num', 'tmt'], axis=0)  # a few are missing a rating
-    #df_bonds = df_bonds[df_bonds.rating_num <= 18]  # otherwise too speculative
 
     # scaling to millions and require size at least 1m
     df_bonds['debt_mv'] = df_bonds['debt_mv'] / 1000000
@@ -282,6 +278,5 @@ def bond_data():
     df_bonds['yield_adj'] = df_bonds['yield_adj'] * 100
     df_bonds['yield_spread_adj'] = df_bonds['yield_spread_adj'] * 100
 
-    #df_bonds.to_pickle("bond_data.pkl")
 
     return df_bonds

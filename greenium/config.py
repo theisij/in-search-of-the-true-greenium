@@ -1,21 +1,4 @@
 ######## packages ########
-# import polars as pl
-# import numpy as np
-# import matplotlib
-# import geopandas as gpd
-# import matplotlib.pyplot as plt
-# import matplotlib.colors as mcolors
-# matplotlib.use('agg')
-# import statsmodels.api as sm
-# from statsmodels.iolib.summary2 import summary_col
-# import zipfile
-# from scipy.stats import norm
-# from scipy.stats import t
-# from linearmodels.panel import PanelOLS
-# import matplotlib as mpl
-# import matplotlib.gridspec as gridspec
-# from linearmodels.panel import compare
-# import os
 import getpass
 import warnings
 from datetime import date

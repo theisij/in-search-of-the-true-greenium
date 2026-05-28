@@ -20,14 +20,6 @@ from greenium.config import (
 from greenium.expected_returns import bond_data, market_data, options_er, subjective
 from greenium.green_measures import isin_gvkey_load, msci, sustainalytics, tri, trucost
 
-# function to load or generate data (don't think it's used)
-# def load_data(file_path, generate_func):
-#     if Path(file_path).exists():
-#         return pd.read_pickle(file_path)
-#     else:
-#         data = generate_func()
-#         data.to_pickle(file_path)
-#         return data
 
 # merge data and then clean
 def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, df_tri,
@@ -63,7 +55,6 @@ def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, 
     for i in ['scope1tot', 'scope12tot', 'scope123tot']:
         log_string = "log_"+i
         df_trucost[log_string] = np.log(df_trucost[i]+1)
-        #df_trucost[log_string] = df_trucost[log_string].replace([np.inf, -np.inf], np.nan) #replacing if np.inf
 
     #removing 4-month lagged date and instead using the date when available
     df_trucost = df_trucost.drop(['date'], axis=1)
@@ -159,7 +150,6 @@ def merge_and_clean(df, df_msci, df_trucost, df_sust_indicator, df_sust_legacy, 
     #removing valuation ratios with negative earnings
     df['be_me'] = np.where(df['be_me'] > 0, df['be_me'], np.nan)
     df['bev_mev'] = np.where(df['bev_mev'] > 0, df['bev_mev'], np.nan)
-    #df['ni_me'] = np.where(df['ni_me'] > 0, df['ni_me'], np.nan)
     df['ebitda_mev'] = np.where(df['ebitda_mev'] > 0, df['ebitda_mev'], np.nan)
 
     # removing infinity valuation ratios

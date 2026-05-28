@@ -387,8 +387,6 @@ def obj_ridge_pos(beta, y, X, lambda_reg, ctrls):
     """
     r = y - X @ beta
     mse = np.mean(r**2)  # 1/n * sum(r^2)
-    # mse = np.mean(np.abs(r))  # 1/n * sum(r^2)
-    # penalty = lambda_reg * np.sum(beta**2) # Old penalty
     penalty = lambda_reg * np.sum(beta[len(ctrls):]**2) # Penalty only on green variables (skip first len(ctrls) variables)
     return mse + penalty
 

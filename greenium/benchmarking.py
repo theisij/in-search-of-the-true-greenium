@@ -208,8 +208,6 @@ def bm_plot_est(results_tidy, agg_green_vars):
     plt.yticks(positions, data_labels)
     plt.axvline(0, color='black', alpha=0.5, linewidth=1)
     plt.xlabel('Greenium estimate (bps)')
-    # plt.ylabel('', fontsize=12)
-    #plt.title('Greenium estimates for aggregate green score proxies', fontsize=14)
 
     # Add grid for better readability
     plt.grid(True, alpha=0.3)
@@ -280,7 +278,6 @@ def bm_plot_t(results_tidy, agg_green_vars):
             f"{t_stat:.1f}",
             size = 7,
             ha="right", va="center",        # center horizontally & vertically
-            # fontweight="bold",                # bold text
             color="white"                     # white text
         )
         
