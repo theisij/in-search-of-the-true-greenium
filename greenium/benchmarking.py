@@ -436,30 +436,6 @@ def agg_indv_plot(results_tidy, green_vars, green_vars_dict):
     return df_input
 
 # Estimate residual correlations (not working!!)
-def residualize_old(df_input, res_var, controls):
-    """
-    Estimate residuals of a variable after controlling main FEs and controls
-    """
-    df_input = df_input.set_index(['id', 'country_ym_num'])
-    y = df_input[res_var]
-    X = df_input[controls]
-    X = sm.add_constant(X)
-    reg = PanelOLS(
-            y, 
-            X, 
-            entity_effects=False, 
-            time_effects=True,
-            other_effects=None, 
-            drop_absorbed=True, 
-            check_rank=False
-        ).fit()
-    # Return residuals with NANs preserved
-    mask = y.notna().to_numpy()
-    resid_full = np.full(len(y), np.nan)
-    resid_full[mask] = reg.resids.to_numpy()
-
-    return resid_full
-
 def residualize(df_input, res_var, controls):
     """
     Residualize res_var on controls + time FE (country_ym_num),

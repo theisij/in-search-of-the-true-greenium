@@ -177,10 +177,6 @@ def aggregate_holdings(holdings_raw: pl.DataFrame, fund_info: pl.DataFrame) -> p
     return holdings
 
 
-def load_holdings(path: str, fund_info: pl.DataFrame) -> pl.DataFrame:
-    """Backward-compatible wrapper: load raw + aggregate."""
-    return aggregate_holdings(load_holdings_raw(path), fund_info)
-
 def load_all_holdings_raw() -> pl.DataFrame:
     """Load all 3 Morningstar holdings CSVs and concatenate raw per-fund holdings."""
     paths = [
@@ -256,12 +252,6 @@ def finalize_holdings_agg(holdings_raw, fund_info, df, isin_gvkey) -> pl.DataFra
     return pl.from_pandas(holdings_agg)
 
 
-def gen_holdings_agg(df, fund_info, isin_gvkey) -> pl.DataFrame:
-    """Backward-compatible wrapper: load all raw + finalize."""
-    holdings_raw = load_all_holdings_raw()
-    return finalize_holdings_agg(holdings_raw, fund_info, df, isin_gvkey)
-
-# Direct green scores ------------------------------------------------------------------
 def direct_green_scores(df, holdings_agg, trim_perc) -> pl.DataFrame:
     """
     Generate direct green scores from holdings data.

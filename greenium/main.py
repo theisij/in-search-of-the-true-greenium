@@ -2,9 +2,7 @@
 import re
 import zipfile
 
-import geopandas as gpd
 import matplotlib as mpl
-import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,9 +11,8 @@ import polars as pl
 import statsmodels.api as sm
 from linearmodels.panel import PanelOLS  #, compare
 from scipy.interpolate import interp1d
-from scipy.stats import ks_2samp, t
+from scipy.stats import t
 from stargazer.stargazer import Stargazer
-from statsmodels.iolib.summary2 import summary_col
 
 from greenium.aggregate_green_score import (
     direct_green_scores,
@@ -601,80 +598,6 @@ def ecdf(data):
     y = np.arange(1, len(x) + 1) / len(x)
     return x, y
 
-def ks_test():
-    # Get ECDFs for both distributions
-    x_rep, y_rep = ecdf(all_tstat)
-    x_pub, y_pub = ecdf(df_pub['t_stat'])
-
-    # Create figure
-    with mpl.rc_context(rc={'font.size': 14}):
-        fig, ax = plt.subplots(figsize=(12, 6))
-
-        # Plot ECDFs - using same colors as histogram
-        ax.step(x_rep, y_rep, where='post', color='tab:green', linewidth=2, alpha=0.8, 
-                linestyle='dashed', label=f'Replication (n={len(all_tstat):,})')
-        ax.step(x_pub, y_pub, where='post', color='tab:blue', linewidth=2, alpha=0.8, 
-                label=f'Published (n={len(df_pub)})')
-
-        # Fill between the two CDFs to show difference region
-        rep_interp = interp1d(x_rep, y_rep, kind='previous', bounds_error=False, fill_value=(0, 1))
-        x_fill = np.sort(np.concatenate([x_rep, x_pub]))
-        y_rep_fill = rep_interp(x_fill)
-        pub_interp = interp1d(x_pub, y_pub, kind='previous', bounds_error=False, fill_value=(0, 1))
-        y_pub_fill = pub_interp(x_fill)
-        ax.fill_between(x_fill, y_rep_fill, y_pub_fill, alpha=0.3, color='tab:grey')
-
-        # Add vertical lines at t = ±1.96
-        ax.axvline(-1.96, color='black', linestyle='--', linewidth=1, alpha=0.5)
-        ax.axvline(1.96, color='black', linestyle='--', linewidth=1, alpha=0.5)
-
-        # Find maximum difference point
-        all_x = np.sort(np.concatenate([x_rep, x_pub]))
-        rep_at_x = rep_interp(all_x)
-        pub_at_x = pub_interp(all_x)
-        diff = np.abs(rep_at_x - pub_at_x)
-        max_idx = np.argmax(diff)
-        x_max = all_x[max_idx]
-        y_max_rep = rep_at_x[max_idx]
-        y_max_pub = pub_at_x[max_idx]
-
-        # Draw vertical line at max difference
-        ax.plot([x_max, x_max], [y_max_rep, y_max_pub], color='black', linewidth=1.5)
-        ax.scatter([x_max, x_max], [y_max_rep, y_max_pub], color='black', s=30, zorder=5)
-
-        # Annotate max difference with text box
-        ax.annotate(f'D = {ks_stat:.2f}', 
-                    xy=(x_max, (y_max_rep + y_max_pub) / 2),
-                    xytext=(x_max + 1.2, (y_max_rep + y_max_pub) / 2),
-                    fontsize=12,
-                    bbox=dict(boxstyle='round', facecolor='white', edgecolor='black'),
-                    arrowprops=dict(arrowstyle='->', color='black', lw=0.8))
-
-        # Add KS test results box with legend-like style
-        textstr = f'Kolmogorov-Smirnov Test\nD = {ks_stat:.2f}\np < 0.001'
-        ax.text(0.02, 0.98, textstr, transform=ax.transAxes, fontsize=14,
-                verticalalignment='top', 
-                bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='lightgray'))
-
-        # Labels and formatting
-        ax.set_xlabel('$t$-statistic', fontsize=14)
-        ax.set_ylabel('Cumulative probability', fontsize=14)
-        ax.set_xlim(-5.5, 5.5)
-        ax.set_ylim(0, 1)
-        ax.legend(fontsize=14, loc='lower right')
-
-        plt.tight_layout()
-        plt.savefig(OUTPUT_FIGURES_GLOBAL / "ks_test_ecdf.pdf", format="pdf", bbox_inches="tight")
-        plt.show()
-        plt.close()
-
-
-
-
-
-
-# multiple fe regression: a function to be called by regressions below
-print('Running main greenium regressions...')
 def fe_reg_function(df_input, dep_var, controls, industry_fe):
     df_out = pd.DataFrame(index=dep_var, columns=['Greenium', 'S.E. (Greenium)', 'Beta', 'S.E. (Beta)',
                                                   'LOG(BE)', 'S.E. (LOG(BE))', 'EBIT/AT', 'S.E. (EBIT/AT)',
