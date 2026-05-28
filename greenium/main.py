@@ -34,7 +34,6 @@ from greenium.benchmarking import (
     bm_regressions,
     bs_est_by_cor,
     df_impute_balanced,
-    new_fig1a_old,
     plot_est_by_cor,
     plot_stat_ranked,
     plot_stat_ranked_combined,
@@ -396,9 +395,7 @@ def agg_indv_main(df, green_vars, green_vars_dict, controls):
     fig.savefig(OUTPUT_FIGURES_GLOBAL / "individual_vs_aggregate_tstats.pdf", 
                 format="pdf", bbox_inches="tight")
     plt.close(fig)
-    # New figure 1a
-    new_fig1a_old(results_tidy)
-    
+
     return None
 
 agg_indv_main(df=df, green_vars=to_test_g, green_vars_dict=to_test_g_dict, 
@@ -3169,48 +3166,6 @@ hoberg_phillips()
 
 plt.close("all")
 # figure 1 panel a
-def fig_1_a_old():
-    # plotting US VW CAP industry-agnostic and -neutral cumulative returns since sample start (Aug-2009)
-    with mpl.rc_context(rc={'font.size': 14}): #to make the font size bigger
-        plt.figure(figsize=(12, 4))
-        # vwcap industry agnostic
-        temp_data = df_ret_vwcap.copy()
-        cols_to_replace = temp_data.loc['2009-08-31'].notna()
-
-        # Replace values at '2009-08' with 0 in those columns
-        temp_data.loc['2009-08-31', cols_to_replace] = 0
-
-        # plotting individual factors (plotting last separately in order to add data label in legend)
-        for i in to_test[:-1]:
-            plt.plot(temp_data[temp_data.index>='2009-08-31'][i].cumsum(), linewidth=0.75, color='tab:grey', alpha=0.5)
-        plt.plot(temp_data[temp_data.index >= '2009-08-31'][to_test[-1:]].cumsum(), linewidth=0.75, color='tab:grey', alpha=0.5, label='GMB')
-
-        # industry neutral
-        temp_data = df_ret_vwcap_indn.copy()  # vwcap industry agnostic
-        cols_to_replace = temp_data.loc['2009-08-31'].notna()
-
-        # Replace values at '2009-4' with 0 in those columns
-        temp_data.loc['2009-08-31', cols_to_replace] = 0
-        # plotting individual factors (plotting last separately in order to add data label in legend)
-        for i in to_test[:-1]:
-            plt.plot(temp_data[temp_data.index>='2009-08-31'][i].cumsum(), linewidth=0.75, color='tab:grey', alpha=0.5, linestyle='dotted')
-        plt.plot(temp_data[temp_data.index >= '2009-08-31'][to_test[-1:]].cumsum(), linewidth=0.75, color='tab:grey', alpha=0.5, linestyle='dotted', label='GMB (industry-neutral)')
-
-        plt.axhline(0, alpha=0.8, color='black', linewidth=1)
-        plt.legend(fontsize=14, framealpha=1, loc='upper left')
-        plt.xlim(pd.to_datetime('2009-08-31'), pd.to_datetime('2022-12-31'))
-        plt.xticks(['2010-01-01','2011-01-01','2012-01-01','2013-01-01','2014-01-01','2015-01-01','2016-01-01','2017-01-01','2018-01-01','2019-01-01','2020-01-01','2021-01-01','2022-01-01'],
-                   ['2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022'])
-        plt.tight_layout()
-        plt.ylabel("Cumulative sum (%)")
-        plt.ylim(-65, 65)
-        plt.savefig(OUTPUT_FIGURES / "fig1_a.pdf", format="pdf", bbox_inches="tight")
-        plt.show()
-        plt.close()
-
-    return None
-fig_1_a_old()
-
 # Realized return of GMB portfolios in the US
 def plot_gmb_ret_us():
     # plotting US VW CAP cumulative returns since sample start (Aug-2009)
@@ -3273,108 +3228,6 @@ def plot_gmb_ret_us():
     return None
 
 # figure 1 panel b-c
-def fig_1_bc_old():
-    # Panel b: Global (baseline); US (baseline); Brown Countries; Green Countries; Global Start Sample; Global End Sample
-    # icc_timetrend_base, icc_timetrend_trend = icc_timetrend()
-    # green_country_summary = icc_country_ccpi()
-
-    plt.close("all")
-    categories = ['Global\n(Baseline)', 'US\n(Baseline)', 'Brown\nCountries', 'Green\nCountries', 'Global\nStart Sample', 'Global\nEnd Sample']
-
-    values = [-green_country_summary.iloc[0],
-              -us_1.loc['icc_avg', 'Greenium'],
-              -green_country_summary.iloc[2],
-              -green_country_summary.iloc[4],
-              -icc_timetrend_baseline.loc['icc_avg', 'slope'],
-              -icc_timetrend_trend.loc['icc_avg', 'slope']]
-    errors = [1.96 * green_country_summary.iloc[1],
-              1.96 * us_1.loc['icc_avg', 'S.E. (Greenium)'],
-              1.96 * green_country_summary.iloc[3],
-              1.96 * green_country_summary.iloc[5],
-              1.96 * icc_timetrend_baseline.loc['icc_avg', 'std_error'],
-              1.96 * icc_timetrend_trend.loc['icc_avg', 'std_error']]
-
-    # Creating the bar chart
-    with mpl.rc_context(rc={'font.size': 14}):
-        plt.figure(figsize=(12, 4))
-
-        # Plotting the first bar for Category A separately
-        plt.bar(categories[0], values[0], yerr=errors[0], capsize=5, color='skyblue') # US
-        plt.bar(categories[1], values[1], yerr=errors[1], capsize=5, color='skyblue') # Global
-
-        # Plotting the stacked bars for Category B and Category C
-        plt.bar(categories[2], values[2], yerr=errors[2], capsize=5, color='slategrey') #Brown countries
-        plt.bar(categories[3], values[2], yerr=None, capsize=5, color='slategrey', alpha=0.2)  # Brown countries base
-        plt.bar(categories[3], values[3], bottom=values[2], yerr=errors[3], capsize=5, color='slategrey') #Green countries on top
-
-        # Plotting the first bar for Category A separately
-        plt.bar(categories[4], values[4], yerr=errors[4], capsize=5, color='orange') #Baseline
-        plt.bar(categories[5], values[4], yerr=None, capsize=5, color='orange', alpha=0.2)  #Shaded baseline
-        plt.bar(categories[5], values[5], bottom=values[4], yerr=errors[5], capsize=5, color='orange') #End of sample
-
-        # Adding a vertical line to separate the two sections
-        plt.axvline(x=1.5, color='grey', linestyle='--')
-        plt.axvline(x=3.5, color='grey', linestyle='--')
-        plt.axhline(0, color='black', linewidth=1)
-
-        #plt.yticks(ticks=plt.gca().get_yticks(), labels=[-abs(int(tick)) for tick in plt.gca().get_yticks()])
-        plt.yticks(ticks=plt.gca().get_yticks(), labels=[-(int(tick)) for tick in plt.gca().get_yticks()])
-        plt.ylabel('Greenium (annual bps)')
-        #plt.ylim(0, 40)
-        # plt.xticks(rotation=45)  # Rotate category labels for better readability
-        plt.tight_layout()  # Adjust the layout to fit everything nicely
-        plt.savefig(OUTPUT_FIGURES / "fig1_b_old.pdf",
-                    format="pdf",
-                    bbox_inches="tight")
-        plt.show()
-        plt.close()
-
-    # Panel c: equity greenium robustness and other asses classes (all US) : E/P, options, Subj, bonds, wacc, sov bond
-    plt.close("all")
-    categories = ['E/P\n(Latest)', 'Exp. Return\n(Options)',
-                  'Subj. Req. Return\n(MS and VL)', 'Corp. Bonds\n(US)', 'WACC\n(US)',
-                  'Sov. Bonds\n(DK & DE)']
-
-    # plotting greenium estimates
-    values = [-us_1.loc['ep_fwd0', 'Greenium'],
-              -us_1.loc['coc_avg_options', 'Greenium'],
-              -us_1.loc['subj_rr_avg', 'Greenium'],
-              -bond_1.loc['yield_spread_adj', 'Greenium'],
-              -us_1.loc['wacc_icc_avg', 'Greenium'],
-              3.235] # from separate excel file
-    # plotting standard errors
-    errors = [1.96 * us_1.loc['ep_fwd0', 'S.E. (Greenium)'],
-              1.96 * us_1.loc['coc_avg_options', 'S.E. (Greenium)'],
-              1.96 * us_1.loc['subj_rr_avg', 'S.E. (Greenium)'],
-              1.96 * bond_1.loc['yield_spread_adj', 'S.E. (Greenium)'],
-              1.96 * us_1.loc['wacc_icc_avg', 'S.E. (Greenium)'],
-              1.96 * 0.6510]  # from separate excel file
-
-    # Creating the bar chart
-    with mpl.rc_context(rc={'font.size': 14}):
-        plt.figure(figsize=(12, 4))
-
-        # Plotting the first bar for Category A separately
-        plt.bar(categories[0], values[0], yerr=errors[0], capsize=5, color='steelblue')
-        plt.bar(categories[1], values[1], yerr=errors[1], capsize=5, color='steelblue')
-        plt.bar(categories[2], values[2], yerr=errors[2], capsize=5, color='steelblue')
-        plt.bar(categories[3], values[3], yerr=errors[3], capsize=5, color='chocolate')
-        plt.bar(categories[4], values[4], yerr=errors[4], capsize=5, color='chocolate')
-        plt.bar(categories[5], values[5], yerr=errors[5], capsize=5, color='chocolate')
-        plt.axvline(x=2.5, color='grey', linestyle='--')
-        plt.axhline(0, color='black', linewidth=1)
-        plt.yticks(ticks=plt.gca().get_yticks(), labels=[-(int(tick)) for tick in plt.gca().get_yticks()])
-        plt.ylabel('Greenium (annual bps)')
-        plt.tight_layout()  # Adjust the layout to fit everything nicely
-        plt.savefig(OUTPUT_FIGURES / "fig1_c_old.pdf",
-                    format="pdf",
-                    bbox_inches="tight")
-        plt.show()
-        plt.close()
-
-    return None
-fig_1_bc_old()
-
 def fig_1_b():
     plt.close("all")
     categories = ['Global\n(Baseline)', 

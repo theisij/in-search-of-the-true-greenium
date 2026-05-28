@@ -398,64 +398,6 @@ def agg_indv_plot(results_tidy, green_vars, green_vars_dict):
 
     return fig
 
-# Create new figure 1a -----------------------------------------------------------------
-def new_fig1a_old(results_tidy):
-    """
-    Create new figure 1a comparing aggregate green score vs individual green scores.
-    """
-    # Average of agggregate estimates
-    agg_avg = results_tidy[results_tidy['term']=='green_score']['t_statistic'].mean()
-    agg_avg = pd.DataFrame({
-        'term': ['green_score'],
-        't_statistic': [np.abs(agg_avg)],
-        'type': ['Aggregate']
-    })
-    # Individual estimates
-    indv = results_tidy[results_tidy['term']==results_tidy['green_variable']]
-    indv = indv[['term', 't_statistic']]
-    indv['type'] = 'Individual'
-    indv['t_statistic'] = np.abs(indv['t_statistic'])
-    indv = indv.sort_values('t_statistic', ascending=False)
-    indv['term'] = [f"i{n}" for n in range(1, len(indv)+1)]
-    # Combine
-    sub = pd.concat([agg_avg, indv])
-
-    # Create plot 
-    x = sub['term']
-    y = sub['t_statistic']
-    colors = {'Aggregate': 'green', 'Individual': 'orange'}
-
-    plt.figure(figsize=(12, 4))
-    plt.bar(
-        x, 
-        y, 
-        color = sub['type'].map(colors)
-    )
-    legend_handles = [
-        mpatches.Patch(color='green', label = 'Aggregate green score'),
-        mpatches.Patch(color='orange', label = 'Individual green scores')
-    ]
-    plt.legend(
-        handles=legend_handles,
-        loc='upper right',
-        fontsize=14                   
-    )
-    plt.xlabel('')
-    plt.ylabel(
-        '|Greenium $t$-statistic|',
-        fontsize=14                   
-    )
-    plt.tight_layout()
-    # Remove x axis text
-    plt.xticks([])
-    plt.yticks(fontsize=14)
-
-    plt.savefig(OUTPUT_FIGURES_GLOBAL / "new_fig1a_old.pdf", format="pdf", bbox_inches="tight")
-    plt.close('all')
-
-# Individual versus aggregate green scores ---------------------------------------------
-# Create a balanced data by imputing missing green scores
-def df_impute_balanced(df, agg_var, indv_vars, gvars, ctrls, y, start):
     df_input = (
         pl.from_pandas(df[['id', 'date', 'gics', 'excntry', 'country_ym_num']+[y]+ctrls+gvars])
         .lazy()
