@@ -159,15 +159,6 @@ desc_table(
     include_skewness=True
 )
 
-# esg variable summary statistics (before standardizing -- with EPA)
-desc_table(
-    data = df[(df.date>=global_start)],
-    cols = to_test,
-    cols_names = to_test_names,
-    save_as = OUTPUT_TABLES_DESCRIPTIVES / "esg_descriptives_with_epa.tex",
-    include_skewness=True
-)
-
 # Signing factors consistently such that they all reflect greenness
 for i in (total_em_factors + emission_factors + tri_factors):
     df[i] = -df[i]
@@ -350,33 +341,6 @@ df['green_score'] = df[AGG_GREEN_VAR_MAIN]
 df.loc[df['date'] < global_start, 'green_score'] = np.nan # removing green score observations prior to start date of sample
 # Consider removing all AGG_GREEN_VARS except for AGG_GREEN_VAR_MAIN
 
-# Compare green_score to van der Beck ESG portfolio weights
-def van_der_beck_comparison(df, path, save_path):
-    """Quarterly Spearman correlation between our share_sust and w_ESG from van der Beck."""
-    esg = pd.read_csv(path, usecols=['date', 'permno', 'w_ESG'])
-    esg['date'] = pd.to_datetime(esg['date']).dt.to_period('M').dt.to_timestamp('M')
-    merged = df.loc[df['permno'].notna(), ['permno', 'date', 'share_sust']].merge(
-        esg, on=['permno', 'date'], how='inner'
-    ).dropna(subset=['share_sust', 'w_ESG'])
-    corrs = merged.groupby('date').apply(
-        lambda g: g['share_sust'].corr(g['w_ESG'], method='spearman')
-    ).rename('spearman_corr')
-    fig, ax = plt.subplots(figsize=(6.5, 3))
-    ax.plot(corrs.index, corrs.values, color='green', linewidth=1)
-    ax.axhline(0, color='black', alpha=0.4, linewidth=0.8)
-    ax.set_ylabel('Spearman correlation')
-    ax.grid(True, alpha=0.3)
-    fig.tight_layout()
-    fig.savefig(save_path, format='pdf', bbox_inches='tight')
-    plt.close(fig)
-    print(f"Van der Beck comparison saved to {save_path} (mean ρ = {corrs.mean():.3f})")
-
-van_der_beck_comparison(
-    df=df,
-    path=DATA_RAW / "other" / "ESG_Portfolio.csv",
-    save_path=OUTPUT_FIGURES_US / "van_der_beck_comp.pdf"
-)
-
 # Individual versus aggregate green score (bivariate regressions)
 def agg_indv_main(df, green_vars, green_vars_dict, controls):
     """
@@ -552,10 +516,6 @@ def esg_var_export():
     esg_var.iloc[:, :-1].to_latex(OUTPUT_TABLES_DESCRIPTIVES / "esg_variables.tex", float_format="%.0f", index=False,
                      column_format='l c c c c p{5cm}')
 
-    # exporting simplified version to slides
-    esg_var.reset_index()[['Name', 'Source', 'Reference']].to_latex(
-        OUTPUT_TABLES_DESCRIPTIVES / "esg_variables_ref.tex", float_format="%.0f", index=False)
-
     return None
 esg_var_export()
 
@@ -606,13 +566,6 @@ desc_table(
     save_as = OUTPUT_TABLES_DESCRIPTIVES / "bond_descriptives.tex"
 )
 def descriptives_other():
-    # ESG measure correlation - all variables separately with each other and then green_score at the top
-    esg_corr_pearson = df[(df.date>=global_start) & (df.trucost_avg.notna()) & (df.msci_avg.notna()) & (df.sust_avg.notna()) & (df.green_score.notna())].groupby('date')[['green_score', 'trucost_avg', 'msci_avg', 'sust_avg']].corr(method='pearson').unstack(level=1).mean().unstack(level=0).astype(float).round(decimals=4)*100
-    esg_corr_pearson.index = ['Agg. Green Score', 'Trucost', 'MSCI', 'Sustainalytics']
-    esg_corr_pearson.columns = ['Agg. Green Score', 'Trucost', 'MSCI', 'Sustainalytics']
-    column_format = 'l' + 'c' * (len(esg_corr_pearson.columns))  # 'l' for left, 'c' for center (centering number columns in output)
-    esg_corr_pearson.to_latex(OUTPUT_TABLES_DESCRIPTIVES / "esg_corr_pearson.tex", float_format="%.1f", column_format = column_format)
-
     # adding country-level counts
     df_count = df[df.green_score.notna()].drop_duplicates(['gvkey']).groupby(['excntry'])['green_score'].count().reset_index()
     df_count = df_count.rename(columns={'green_score': 'N'})
@@ -2234,19 +2187,6 @@ def icc_timetrend_data():
 
     return params_timetrend_baseline, params_timetrend_trend
 
-# Diagnostics: firm count over time (to understand difference between FMB and pooled estimates)
-def fm_diagnostics_firm_count():
-    temp = df[df.green_score.notna() & df.gics6.notna() & (df.date >= global_start)]
-    temp = temp.dropna(subset=['beta_252d', 'ebit_at', 'netdebt_at', 'log_be', 'icc_avg'])
-    firm_counts = temp.groupby('date')['id'].nunique()
-    print(f"Firms per month — Min: {firm_counts.min()}, Max: {firm_counts.max()}, Ratio: {firm_counts.max()/firm_counts.min():.1f}x")
-    plt.plot(firm_counts)
-    plt.ylabel("Number of firms")
-    plt.tight_layout()
-    plt.savefig(OUTPUT_FIGURES_GLOBAL / "diag_firm_count_over_time.pdf", format="pdf", bbox_inches="tight")
-    plt.show()
-    plt.close()
-fm_diagnostics_firm_count()
 
 # Estimate pooled time trend (needed for trend line in FM plots)
 icc_timetrend_baseline, icc_timetrend_trend = icc_timetrend_data()
@@ -2259,8 +2199,6 @@ icc_timetrend_trend.to_parquet(DATA_INTERIM / 'icc_timetrend_trend.parquet')
 fama_macbeth_full(esg_var='green_score', fig_name='icc_fm_all',
                   trend_baseline=float(icc_timetrend_baseline.loc['icc_avg', 'slope']),
                   trend_slope=float(icc_timetrend_trend.loc['icc_avg', 'slope']))
-# Fama-MacBeth with raw (unstandardized) scope 1 emission intensity
-fama_macbeth_full(esg_var='raw_scope1int_assets', fig_name='icc_fm_raw_scope1int_assets')
 
 # Last-period cross-sectional regression with clustered standard errors
 def last_period_regression(df, dep_var, esg_var, controls, cluster_var):
@@ -2723,135 +2661,6 @@ wacc_all()
 pd.options.display.float_format = '{:.2f}'.format # changing float format to 2 decimals
 
 plt.close("all")
-# global icc map
-print('Greenium by country analysis...')
-def icc_country_map():
-    #icc by country with time FE (min 20 obs per country in each period) - icc slope scale capped to 80th percentile for visual purposes
-    test_data = df[df.date >= global_start]
-    test_data['country_ym'] = np.where(test_data['excntry'].notna(), test_data.excntry.astype(str) + test_data.eom.astype(str), np.nan)
-    test_data = test_data[test_data.green_score.notna()]
-    test_data = test_data[test_data.icc_avg.notna()]
-    test_data = test_data[test_data.gics6.notna()]
-    test_data = test_data.dropna(subset=['beta_252d', 'ebit_at', 'netdebt_at', 'log_be'])
-    test_data['country_ym_count'] = test_data.groupby('country_ym')['country_ym'].transform('count')
-    test_data = test_data[test_data.country_ym_count >= 20] #requiring at least 20 observations in a country-date to be included
-    test_data['country_date_count'] = test_data.groupby('excntry')['date'].transform('nunique')
-    test_data = test_data[test_data.country_date_count >= 12]  # requiring at least 12 unique dates per country
-
-    test_data['icc_avg'] = test_data['icc_avg']*100 #scaling to bps
-
-    test_data = test_data.set_index(['id', 'date'])
-    out = pd.DataFrame(index=test_data.excntry.drop_duplicates().sort_values(), columns=['estimate', 'stderror', 'tstat'])
-    for i in out.index:
-        print(i)
-        temp_data = test_data[test_data.excntry==i].copy()
-        reg = PanelOLS(temp_data['icc_avg'], sm.add_constant(temp_data[['green_score', 'beta_252d', 'ebit_at', 'netdebt_at', 'log_be']]), entity_effects=False, time_effects=True,
-                   other_effects=None, drop_absorbed=True, check_rank=False).fit(cov_type="clustered", cluster_entity=False, cluster_time=True, clusters=temp_data['gics'])
-
-        out.loc[i, 'estimate'] = reg.params.loc['green_score']
-        out.loc[i, 'stderror'] = reg.std_errors.loc['green_score']
-        out.loc[i, 'tstat'] = reg.tstats.loc['green_score']
-
-    out = out.reset_index()
-
-    def maps(out):
-        ##### global heatmaps of emission coefficients
-        country_list = pd.read_excel(DATA_RAW / "other" / "country_abbr.xlsx", sheet_name="Sheet1", usecols=['iso_3', 'Country'])
-
-        country_list = country_list.rename(
-            columns={'iso_3': 'excntry'})
-
-        out = out.merge(country_list, how='left', on=['excntry'])
-
-        # renaming to conform with data
-        out = out.replace('Czech Republic', 'Czechia')
-        out = out.replace('United States', 'United States of America')
-        out = out.replace('Korea, South', 'South Korea')
-        out = out.replace('Hong Kong (China)', 'Hong Kong')
-
-        # plotting coefficients and t-stats on global map
-        for loop_var in ['estimate', 'tstat']:
-            # Load a GeoDataFrame containing countries' geometry
-            if False:
-                # Download and save to data/raw
-                import requests
-                
-                url = "https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip"
-                zip_path = DATA_RAW / "other" / "countries.zip"
-                with requests.get(url, stream=True) as r:
-                    r.raise_for_status()
-                    with open(zip_path, "wb") as f:
-                        for chunk in r.iter_content(chunk_size=1024*1024):
-                            f.write(chunk)
-
-                print(f"Downloaded countries ZIP to {zip_path}")
-                
-                # Old approach - download directly in script
-                # url = "https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip"
-                # world = gpd.read_file(url)
-            world = gpd.read_file(DATA_RAW / "other" / "countries.zip")
-            world = world[world.CONTINENT != "Antarctica"] #removing Antarctica
-
-            # now merging map data with estimates country-by-country
-            world = world.merge(out, how='left', left_on='NAME', right_on='Country')
-
-            # Define the colormap
-            #colormap = plt.cm.RdYlBu
-            colormap = plt.cm.BrBG.reversed() #reversed brown-to-green map
-            # Normalize the colormap
-            norm = mcolors.Normalize(vmin=world[loop_var].min(), vmax=world[loop_var].max())
-
-            sym_value = max(abs(world[loop_var].min()), abs(world[loop_var].max()))
-            norm = mcolors.Normalize(vmin=-sym_value, vmax=sym_value)   # symmetric
-
-            # capping axis at 80% percentile
-            if loop_var=='estimate':
-                norm = mcolors.Normalize(vmin=-abs(out[loop_var]).quantile(0.8),
-                                     vmax=abs(out[loop_var]).quantile(0.8))  # symmetric
-
-            # Function to apply color based on value
-            def apply_color(value):
-                if value == "nan":
-                    return 'lightgrey'  # Color for zero values
-                else:
-                    return mcolors.to_hex(colormap(norm(value)))  # Color for non-zero values
-
-            # Apply the color mapping function
-            world['color'] = world[loop_var].apply(apply_color)
-
-            world['color'] = world['color'].replace("#000000", 'lightgrey')
-
-            # Plot the merged DataFrame using the colors defined
-            fig, ax = plt.subplots(1, 1, figsize=(12, 8))
-            world.plot(color=world['color'], ax=ax, legend=True)
-
-            # titles = {
-            #     'estimate': 'estimate: icc_avg',
-            #     'tstat': 'tstat: icc_avg',
-            # }
-
-            #title = titles.get(loop_var, "Default Title")  # Fallback to "Default Title" if not found
-
-            # Create a colorbar as a legend
-            sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
-            sm._A = []  # Empty array for the data range
-            #cbar = fig.colorbar(sm, ax=ax, orientation='horizontal', pad=0.1) 
-            fig.colorbar(sm, ax=ax, orientation='horizontal', pad=0.1)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            plt.tight_layout()
-
-            file_path = OUTPUT_FIGURES_MAPS / "{}.svg".format(loop_var)
-
-            plt.savefig(file_path)
-
-            plt.show()
-            plt.clf()
-        return None
-    maps(out)
-    return None
-icc_country_map()
-
 # green/brown country regression using CCPI
 def icc_country_ccpi():
     # loading ccpi data
@@ -3292,128 +3101,6 @@ def fig_1_b():
 fig_1_b()
 
 plt.close("all")
-# PST GMB vs. MCCC
-print('Some pure replications...')
-def gmb_extension():
-    # importing L/S factor returns from  OpenAssetPricing
-    zf = zipfile.ZipFile(DATA_RAW / "ac_factors" / "PredictorAltPorts_QuintilesVW.zip")
-    df_signal_ret = pd.read_csv(zf.open('PredictorAltPorts_QuintilesVW.csv', 'r'),
-                                usecols=['date', 'signalname', 'port', 'ret'])
-    zf.close()
-
-    # extracting two main factors
-    df_signal_ret = df_signal_ret[df_signal_ret.signalname.isin(['AnnouncementReturn', 'AnalystRevision'])]
-
-    # keeping only L/S portfolios
-    df_signal_ret = df_signal_ret[df_signal_ret.port == 'LS']
-
-    # creating datetime index
-    df_signal_ret = df_signal_ret.set_index(pd.to_datetime(df_signal_ret['date'], format='%Y-%m-%d'))
-    df_signal_ret.index = df_signal_ret.index.to_period('M').to_timestamp('M')  # converting to end-of-month dates
-    df_signal_ret = df_signal_ret.drop(['date'], axis=1)
-    df_signal_ret = df_signal_ret.reset_index()
-    df_signal_ret = df_signal_ret.drop('port', axis=1)
-    df_signal_ret = df_signal_ret.pivot(index='date', columns='signalname', values='ret')
-
-    # loading MCCC (media climate change concerns index)
-    df_mccc = pd.read_excel(DATA_RAW / "mccc" / "Sentometrics_US_Media_Climate_Change_Index.xlsx",
-                            sheet_name='2023 update monthly', skiprows=6, usecols=['Date', 'Aggregate'])
-    df_mccc = df_mccc.rename(columns={'Date': 'date', 'Aggregate': 'mccc'})
-
-    df_mccc = df_mccc.set_index('date')
-    df_mccc.index = df_mccc.index.to_period('M').to_timestamp('M')
-    df_mccc = df_mccc.reset_index()
-
-    # estimating rolling 36 month AR(1) shocks to MCCC
-    def estimate_ar1(data):
-        Y = data[1:]
-        X = data[:-1]
-        X = sm.add_constant(X)  # adds a constant (intercept) to the predictor
-        model = sm.OLS(Y, X).fit()
-        return model.params[0], model.params[1]  # intercept, slope
-
-    # Initialize lists to store results
-    intercepts = []
-    slopes = []
-
-    window_size = 36
-    for start in range(0, len(df_mccc) - window_size + 1):
-        window_data = df_mccc['mccc'].iloc[start:start + window_size].values
-        intercept, slope = estimate_ar1(window_data)
-        intercepts.append(intercept)
-        slopes.append(slope)
-
-    # Store results in the original dataframe (aligned with the end of each window)
-    df_mccc['intercept'] = np.nan
-    df_mccc['slope'] = np.nan
-    df_mccc.loc[df_mccc.index[window_size - 1:], 'intercept'] = intercepts
-    df_mccc.loc[df_mccc.index[window_size - 1:], 'slope'] = slopes
-
-    df_mccc['mccc_pred'] = df_mccc['intercept'] + df_mccc['mccc'] * df_mccc['slope']
-
-    df_mccc[['mccc_pred']] = df_mccc[['mccc_pred']].shift(1)
-    df_mccc['mccc_pred_error'] = df_mccc['mccc'] - df_mccc['mccc_pred']
-    df_mccc = df_mccc.set_index('date')
-    df_mccc = df_mccc.rename(columns={'mccc_pred_error': 'mccc_shock'})
-    df_mccc['mccc_shock_lag'] = df_mccc['mccc_shock'].shift(1)
-    df_mccc = df_mccc[['mccc_shock', 'mccc_shock_lag']]
-
-    # replicating PST table 4 (LHS using excess returns)
-    Y = df_ret_vw['greenness'].dropna()
-    X = sm.add_constant(df_ff6[df_ff6.index.isin(Y.index)][['Mkt-RF', 'SMB', 'HML']])
-    X = X.merge(df_mccc, how='left', left_index=True, right_index=True)
-    X = X.dropna() #MCCC only until Aug-2022
-    Y = Y[Y.index.isin(X.index)]
-    X = X.merge(df_signal_ret, how='left', left_index=True, right_index=True) # adding signal factors to X variables
-
-    # full time-series estimates
-    results = sm.OLS(Y, X[['const', 'Mkt-RF', 'SMB', 'HML']]).fit()
-    Y_alpha_full = results.resid + results.params.iloc[0]  # residual + alpha = new Y
-
-    # Nov-2012 to Jun 2018 (PST)
-    Y_pst = Y[(Y.index >= '2012-11-01') & (Y.index <= '2018-06-30')]
-    X_pst = X[X.index.isin(Y_pst.index)]
-    results = sm.OLS(Y_pst, X_pst[['const', 'Mkt-RF', 'SMB', 'HML']]).fit()
-    Y_alpha_pst = results.resid + results.params.iloc[0]  # residual + alpha = new Y
-
-    # Nov-2012 to Aug-2022
-    Y_pstext = Y[(Y.index >= '2012-11-01')]
-    X_pstext = X[X.index.isin(Y_pstext.index)]
-    results = sm.OLS(Y_pstext, X_pstext[['const', 'Mkt-RF', 'SMB', 'HML']]).fit()
-    Y_alpha_pstext = results.resid + results.params.iloc[0]  # residual + alpha = new Y
-
-    # Running regressions using excess returns as LHS
-    reg1 = sm.OLS(Y_pst, X_pst[['const', 'mccc_shock', 'mccc_shock_lag']]).fit(cov_type='HC3')
-    reg2 = sm.OLS(Y_pst, X_pst[['const', 'mccc_shock', 'mccc_shock_lag', 'AnnouncementReturn', 'AnalystRevision']]).fit(cov_type='HC3')
-    reg3 = sm.OLS(Y_pstext, X_pstext[['const', 'mccc_shock', 'mccc_shock_lag']]).fit(cov_type='HC3')
-    reg4 = sm.OLS(Y_pstext, X_pstext[['const', 'mccc_shock', 'mccc_shock_lag', 'AnnouncementReturn', 'AnalystRevision']]).fit(cov_type='HC3')
-    reg5 = sm.OLS(Y, X[['const', 'mccc_shock', 'mccc_shock_lag']]).fit(cov_type='HC3')
-    reg6 = sm.OLS(Y, X[['const', 'mccc_shock', 'mccc_shock_lag', 'AnnouncementReturn', 'AnalystRevision']]).fit(cov_type='HC3')
-
-    # Running regressions using FF3 alpha as LHS
-    reg7 = sm.OLS(Y_alpha_pst, X_pst[['const', 'mccc_shock', 'mccc_shock_lag']]).fit(cov_type='HC3')
-    reg8 = sm.OLS(Y_alpha_pst, X_pst[['const', 'mccc_shock', 'mccc_shock_lag', 'AnnouncementReturn', 'AnalystRevision']]).fit(cov_type='HC3')
-    reg9 = sm.OLS(Y_alpha_pstext, X_pstext[['const', 'mccc_shock', 'mccc_shock_lag']]).fit(cov_type='HC3')
-    reg10 = sm.OLS(Y_alpha_pstext, X_pstext[['const', 'mccc_shock', 'mccc_shock_lag', 'AnnouncementReturn', 'AnalystRevision']]).fit(cov_type='HC3')
-    reg11 = sm.OLS(Y_alpha_full, X[['const', 'mccc_shock', 'mccc_shock_lag']]).fit(cov_type='HC3')
-    reg12 = sm.OLS(Y_alpha_full, X[['const', 'mccc_shock', 'mccc_shock_lag', 'AnnouncementReturn', 'AnalystRevision']]).fit(cov_type='HC3')
-
-    # outputting
-    dfoutput = summary_col([reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8, reg9, reg10, reg11, reg12], stars=True,
-                           regressor_order=['const', 'mccc_shock', 'mccc_shock_lag', 'AnnouncementReturn',
-                                            'AnalystRevision'],
-                           model_names=['(1)', '(2)', '(3)', '(4)', '(5)', '(6)', '(7)', '(8)', '(9)', '(10)', '(11)', '(12)'],
-                           info_dict={'N': lambda x: "{0:d}".format(int(x.nobs))}, float_format='%.2f')
-    dfoutput.add_title('GMB ExcRet (1-6) / GMB Alpha (7-12): 2012-2018 (1-2 & 7-8) / 2012-2022 (3-4 & 9-1) / 2007-2022 (5-6 & 11-12)')
-    print(dfoutput)
-
-    test = dfoutput.as_latex()
-    text_file = open(OUTPUT_TABLES_US / "pst_table4_extended.tex", "w")
-    text_file.write(test)
-    text_file.close()
-
-    return df_mccc
-df_mccc = gmb_extension()
 
 # Zhang and PST replication
 def replication_tables():
@@ -3612,57 +3299,6 @@ def green_score_spreads(df_us, df):
 
     return None
 green_score_spreads(df[df.excntry=="USA"], df)
-
-# 1-year esg convergence to aggregate green score
-def esg_convergence():
-    # leading delta esg regressed on (green_score-esg). No FE
-
-    esg_conv = {} # dictionary to store results
-
-    # data requirements
-    test_data = df[df.date >= global_start]
-    test_data = test_data[test_data.green_score.notna()]
-    test_data = test_data[test_data.gics6.notna()]
-    test_data = test_data.sort_values(by=['id', 'date'])
-    test_data = test_data.set_index(['id', 'country_ym_num'])
-
-    # loop through each ESG measure
-    for esg_var in to_test:
-        test_data['esg_mean_diff'] = test_data['green_score'] - test_data[esg_var] #difference in green score and esg variable
-        test_data['esg_diff'] = test_data.groupby(level=0)[esg_var].diff(12) # 12 month change in esg variable
-        test_data['esg_diff_lead'] = test_data.groupby(level=0)['esg_diff'].shift(-12) # 12 month ahead change in esg variable
-        test_data_filtered = test_data.dropna(subset=['esg_diff_lead', 'esg_mean_diff'])
-        Y = test_data_filtered['esg_diff_lead']
-        X = test_data_filtered[['esg_mean_diff']]
-
-        model = PanelOLS(Y, sm.add_constant(X), entity_effects=False, time_effects=False)
-        results = model.fit(cov_type='clustered', cluster_entity=False, cluster_time=False, clusters=test_data_filtered[['gics', 'date']])
-
-        # Store coefficient and standard error
-        coef = results.params['esg_mean_diff']
-        tstat = results.tstats['esg_mean_diff']
-        esg_conv[esg_var] = (coef, tstat)
-
-    # converting to dataframe and exporting to LaTeX
-    esg_conv = pd.DataFrame.from_dict(esg_conv, orient='index', columns=['coef', 't-stat'])
-    esg_conv.index = to_test_names
-
-    # new_order = ['S1INT (Sales)', 'S1+2INT (Sales)', 'S1+2+3INT (Sales)', 'S1INT (Assets)', 'S1+2INT (Assets)',
-    #              'S1+2+3INT (Assets)',
-    #              'Weighted ESG score', 'Environment score', 'Total ESG score', 'Environmental score',
-    #              'LOG(S1TOT)', 'LOG(S1+2TOT)', 'LOG(S1+2+3TOT)', 'Ind.-adj. ESG score',
-    #              'Greenness (PST)', 'E climate score', 'E nat. res. score', 'E waste score', 'E env. opps. score',
-    #              'TRI (Sales)', 'TPWINT (Sales)', 'TRI (Assets)', 'TPWINT (Assets)']  # Desired order of index names
-    # esg_conv = esg_conv.reindex(new_order)
-
-    esg_conv.columns = ['Coeff. estimate', '$t$-statistic']
-
-    column_format = 'l' + 'c' + 'c'  # 'l' for left, 'c' for center (centering number columns in output)
-
-    esg_conv.to_latex(OUTPUT_TABLES_DESCRIPTIVES / "esg_convergence.tex", float_format="%.2f", column_format=column_format)
-
-    return None
-esg_convergence()
 
 # benjamini-hochberg multiple testing adjustment
 # inspect = pd.concat([ret_vwcap.loc[to_test], ret_vwcap_indn.loc[to_test]], axis=0)
