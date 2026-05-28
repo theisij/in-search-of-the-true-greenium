@@ -904,75 +904,12 @@ df_ret_vwcap_country, df_ret_vwcap_indn_country = portfolio_sorts_country(df[(df
 df_ret_vwcap_country.to_parquet(DATA_PROCESSED / "gs_factor_country_vwcap.parquet")
 df_ret_vwcap_indn_country.to_parquet(DATA_PROCESSED / "gs_factor_country_vwcap_indn.parquet")
 
-global_temp_1 = ret_vw.reset_index().copy()
-global_temp_1 = global_temp_1.rename(columns={'index': 'esg'})
-global_temp_1['ind_neut'] = 0
-global_temp_1['excntry'] = "USA"
-
-global_temp_2 = ret_vw.reset_index().copy()
-global_temp_2 = global_temp_1.rename(columns={'index': 'esg'})
-global_temp_2['ind_neut'] = 1
-global_temp_2['excntry'] = "USA"
-
-global_temp_3 = ret_vwcap_g.copy()
-global_temp_3['ind_neut'] = 0
-
-global_temp_4 = ret_vwcap_indn_g.copy()
-global_temp_4['ind_neut'] = 1
-
-df_temp = pd.concat([global_temp_1, global_temp_2, global_temp_3, global_temp_4], axis=0)
-
-# 1. Drop the irrelevant columns
-df_temp = df_temp.drop(columns=['SR', 'exc_ret', 'a_capm', 'a_ff3', 'a_ff6', 'a_q5'])
-
-# 2. Separate the `t_` and `p_` columns, keeping `esg` and `excntry` as id_vars
-df_t = df_temp.melt(id_vars=['esg', 'excntry'], value_vars=[col for col in df_temp.columns if col.startswith('t_')],
-               var_name='metric', value_name='t_stat')
-df_p = df_temp.melt(id_vars=['esg', 'excntry'], value_vars=[col for col in df_temp.columns if col.startswith('p_')],
-               var_name='metric', value_name='p_value')
-
-# 3. Clean up the column names to only contain the metric name (remove 't_' and 'p_')
-df_t['metric'] = df_t['metric'].str.replace(r'^t_', '', regex=True)
-df_p['metric'] = df_p['metric'].str.replace(r'^p_', '', regex=True)
-
-# 4. Merge the two dataframes on 'esg', 'excntry', and 'metric' to get both t_stat and p_value in the same row
-df_temp = pd.merge(df_t, df_p, on=['esg', 'excntry', 'metric'])
-
-# Save US and Global-ex factor time series
-df_ret_vwcap.to_parquet(DATA_PROCESSED / "factor_us_vwcap_ts.parquet")
-df_ret_vwcap_indn.to_parquet(DATA_PROCESSED / "factor_us_vwcap_indn_ts.parquet")
-ret_vwcap_g.to_parquet(DATA_PROCESSED / "factor_globalexus_vwcap_ts.parquet")
-ret_vwcap_indn_g.to_parquet(DATA_PROCESSED / "factor_globalexus_vwcap_indn_ts.parquet")
-
 # Exporting basic data (US and Global ex-US separately), for use in R
 df.to_parquet(DATA_PROCESSED / "df_full.parquet")
 df[(df.green_score.notna()) & (df.excntry=="USA")][['date', 'id', 'excntry', 'me', 'ret_exc_lead1m', 'gics', 'icc_avg', 'beta_252d', 'ebit_at', 'netdebt_at', 'log_be', 'green_score']+total_em_factors+emission_factors+msci_factors+sust_factors+tri_factors].to_csv(DATA_PROCESSED / "df_us.csv")
 df[(df.green_score.notna()) & (df.excntry!="USA")][['date', 'id', 'excntry', 'me', 'ret_exc_lead1m', 'gics', 'icc_avg', 'beta_252d', 'ebit_at', 'netdebt_at', 'log_be', 'green_score']+total_em_factors+emission_factors+msci_factors+sust_factors].to_csv(DATA_PROCESSED / "df_gexus.csv")
 
 
-# importing published t-stats
-df_pub = pd.read_excel(DATA_RAW / "other" / "published_tstats.xlsx") #, usecols=['t-stat', 'N']
-df_pub = df_pub.rename(columns={'t-stat': 't_stat'})
-df_pub['p_val'] = 2 * (1 - t.cdf(abs(df_pub.t_stat), df_pub.N-1)) #converting t-stats to p-values using N-1 DoF
-#df_pub = df_pub.drop('N', axis=1)
-
-# df_pub.to_csv(DATA_INTERIM / "published_factors.csv")
-
-# combining industry-agnostic and -neutral information
-us_temp_alpha = pd.concat([ret_vwcap.loc[to_test], ret_vwcap_indn.loc[to_test]], axis=0)
-us_tstat = us_temp_alpha.loc[to_test][['t_exc_ret', 't_a_capm', 't_a_ff3', 't_a_ff6', 't_a_q5']].melt()['value'].sort_values(ascending=True)
-us_pval = us_temp_alpha.loc[to_test][['p_exc_ret', 'p_a_capm', 'p_a_ff3', 'p_a_ff6', 'p_a_q5']].melt()['value'].sort_values(ascending=True)
-
-global_temp_alpha = pd.concat([ret_vwcap_g, ret_vwcap_indn_g], axis=0)
-global_tstat = global_temp_alpha[['t_exc_ret', 't_a_capm', 't_a_ff3', 't_a_ff6']].melt()['value'].sort_values(ascending=True)
-global_pval = global_temp_alpha[['p_exc_ret', 'p_a_capm', 'p_a_ff3', 'p_a_ff6']].melt()['value'].sort_values(ascending=True)
-
-all_temp_alpha = pd.concat([us_temp_alpha, global_temp_alpha], axis=0)
-all_tstat = all_temp_alpha[['t_exc_ret', 't_a_capm', 't_a_ff3', 't_a_ff6', 't_a_q5']].melt()['value'].dropna().sort_values(ascending=True)
-all_pval = all_temp_alpha[['p_exc_ret', 'p_a_capm', 'p_a_ff3', 'p_a_ff6', 'p_a_q5']].melt()['value'].dropna().sort_values(ascending=True)
-
-#all_pub_tstat = pd.concat([df_pub['t_stat'], all_tstat], axis=0).sort_values(ascending=True)
-all_pub_pval = pd.concat([df_pub['p_val'], all_pval], axis=0).sort_values(ascending=True)
 
 
 plt.close("all")
