@@ -31,7 +31,7 @@ else:
     raise ValueError(f"Unknown user: {user}")
 
 # General settings
-FULL_RUN = False  # Temporarily False for the Task 1.6 verification re-run after the EPA TRI fix + cumulative pruning. Will be restored to True before the next commit.
+FULL_RUN = True  # Reproducibility baseline: regenerate all intermediates from raw inputs. Set to False during local iteration to reuse cached data/interim parquets.
 global_start = '2009-08-01' # setting the global start date of the analysis
 IMPUTE_START = False
 IMPUTE_START_DATE = date(2009, 8, 1) #'2009-08-01' # Start date for global analysis 
