@@ -70,9 +70,6 @@ to_test = total_em_factors + emission_factors + msci_factors + sust_factors + tr
 to_test_g = total_em_factors + emission_factors + msci_factors + sust_factors
 
 # name of factors for outputs
-to_test_names = ['LOG(S1TOT)', 'LOG(S1+2TOT)', 'LOG(S1+2+3TOT)', 'S1INT (Sales)', 'S1+2INT (Sales)', 'S1+2+3INT (Sales)', 'S1INT (Assets)', 'S1+2INT (Assets)', 'S1+2+3INT (Assets)',
-                         'Ind.-adj. ESG score', 'Weighted ESG score', 'Environment score', 'Greenness (PST)', 'E climate score', 'E nat. res. score', 'E waste score', 'E env. opps. score',
-                         'Total ESG score', 'Environmental score', 'TRI (Sales)', 'TPWINT (Sales)', 'TRI (Assets)', 'TPWINT (Assets)']
 to_test_g_names = ['LOG(S1TOT)', 'LOG(S1+2TOT)', 'LOG(S1+2+3TOT)', 'S1INT (Sales)', 'S1+2INT (Sales)', 'S1+2+3INT (Sales)', 'S1INT (Assets)', 'S1+2INT (Assets)', 'S1+2+3INT (Assets)',
                          'Ind.-adj. ESG score', 'Weighted ESG score', 'Environment score', 'Greenness (PST)', 'E climate score', 'E nat. res. score', 'E waste score', 'E env. opps. score',
                          'Total ESG score', 'Environmental score']
@@ -108,9 +105,7 @@ OUTPUT = PROJECT_ROOT / "output"
 OUTPUT_TABLES = OUTPUT / "tables"
 OUTPUT_TABLES_DESCRIPTIVES = OUTPUT_TABLES / "des_stats"
 OUTPUT_TABLES_GLOBAL = OUTPUT_TABLES / "global"
-OUTPUT_TABLES_US = OUTPUT_TABLES / "us"
 OUTPUT_FIGURES = OUTPUT / "figures"
 OUTPUT_FIGURES_DESCRIPTIVES = OUTPUT_FIGURES / "des_stats"
 OUTPUT_FIGURES_GLOBAL = OUTPUT_FIGURES / "global"
 OUTPUT_FIGURES_US = OUTPUT_FIGURES / "us"
-OUTPUT_FIGURES_MAPS = OUTPUT_FIGURES / "maps"
