@@ -81,10 +81,17 @@ if FULL_RUN:
     df, df_bonds, holdings_agg, holdings_agg_bf = load_all_data()
 else:
     print("FULL_RUN=False: loading cached interim data files.")
-    df = pd.read_parquet(DATA_INTERIM / "df_main.parquet")
-    df_bonds = pd.read_parquet(DATA_INTERIM / "df_bonds.parquet")
-    holdings_agg = pl.read_parquet(DATA_INTERIM / "holdings_agg.parquet")
-    holdings_agg_bf = pl.read_parquet(DATA_INTERIM / "holdings_agg_bf.parquet")
+    try:
+        df = pd.read_parquet(DATA_INTERIM / "df_main.parquet")
+        df_bonds = pd.read_parquet(DATA_INTERIM / "df_bonds.parquet")
+        holdings_agg = pl.read_parquet(DATA_INTERIM / "holdings_agg.parquet")
+        holdings_agg_bf = pl.read_parquet(DATA_INTERIM / "holdings_agg_bf.parquet")
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            "FULL_RUN=False but the cached interim data was not found in "
+            "data/interim/. Run once with FULL_RUN=True (set in greenium/config.py) "
+            "to generate the interim files from data/raw/ before using FULL_RUN=False."
+        ) from e
 
 #### NOTE: code includes plt.close("all") throughout in order to automatically close outputs created; can be deleted
 
