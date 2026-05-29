@@ -1,5 +1,4 @@
 ######## packages ########
-import getpass
 import warnings
 from datetime import date
 from pathlib import Path
@@ -15,20 +14,6 @@ warnings.filterwarnings('ignore', category=MissingValueWarning) # suppress missi
 warnings.filterwarnings("ignore", category=pd.errors.DtypeWarning) #suppressing import warning on dtypes
 warnings.filterwarnings("ignore", category=FutureWarning) # suppressing future package changes (remove to see errors)
 pd.options.display.float_format = '{:.5f}'.format
-
-# Identify the current user
-user = getpass.getuser()  # This will get the username of the logged-in user
-
-# Set paths based on the user
-if user == 'meskilds':
-    base_path = r"C:\Users\meskilds\CBS Dropbox\Marc Baert Eskildsen\ESG_EJIP"
-    save_path = r"C:\Users\meskilds\CBS Dropbox\Marc Baert Eskildsen\Apps\Overleaf\Greenium (EIJP)"
-elif user == 'tij2':
-    base_path = r"C:\Users\tij2\Dropbox\Research\Active projects\ESG_EJIP"
-    # save_path = r"C:\Users\tij2\Dropbox\Research\Active projects\ESG_EJIP\Test"
-    save_path = r"C:\Users\tij2\Dropbox\Apps\Overleaf\Greenium (EIJP)"
-else:
-    raise ValueError(f"Unknown user: {user}")
 
 # General settings
 FULL_RUN = True  # Reproducibility baseline: regenerate all intermediates from raw inputs. Set to False during local iteration to reuse cached data/interim parquets.

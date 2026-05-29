@@ -442,7 +442,6 @@ def esg_var_export():
     esg_var = esg_var.reset_index()
     esg_var.columns = ['Name', 'Time period', 'Avg. $N$ (US)', 'Avg. $N$ (Global ex-US)', 'Source', 'Reference']
 
-    #esg_var = pd.read_csv(r"C:\Users\meskilds\Dropbox (CBS)\ESG_EJIP\esg_var_import.csv")
     pd.set_option('display.max_colwidth', None)
     esg_var.iloc[:, :-1].to_latex(OUTPUT_TABLES_DESCRIPTIVES / "esg_variables.tex", float_format="%.0f", index=False,
                      column_format='l c c c c p{5cm}')
