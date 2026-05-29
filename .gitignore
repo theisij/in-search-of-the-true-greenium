@@ -47,4 +47,3 @@ Old/
 !/output/tables/global/.gitkeep
 !/output/tables/us/.gitkeep
 !/logs/.gitkeep
-!/logs/verification-*.md
