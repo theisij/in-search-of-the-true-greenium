@@ -1,38 +1,95 @@
-# In Search of the True Greenium — replication code
+# Overview
 
-Replication code for **"In Search of the True Greenium"** by Eskildsen, Ibert, Jensen, and Pedersen (forthcoming, *Journal of Financial Economics*). A single end-to-end run of the pipeline regenerates every figure and table that the main paper (`main_JFE.tex`) and its Internet Appendix (`InternetAppendix.tex`) reference.
+This repository contains the code used for the paper [In Search of the True Greenium](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4744608) by Eskildsen, Ibert, Jensen, and Pedersen (forthcoming, *Journal of Financial Economics*). Please cite this paper if you are using the code:
 
-This repository was carved out of a larger codebase that produced two related papers; only the code needed for this paper is retained here. See **Provenance** below.
+```
+@article{EskildsenIbertJensenPedersen2026,
+    author = {Eskildsen, Marc Baert and Ibert, Markus and Jensen, Theis Ingerslev and Pedersen, Lasse Heje},
+    title = {In Search of the True Greenium},
+    journal = {Journal of Financial Economics},
+    year = {2026}
+}
+```
 
-## Reproduces
+Please send questions about the code to Theis I. Jensen at [theis.jensen@yale.edu](mailto:theis.jensen@yale.edu).
 
-61 figures and tables in total — the union of the main paper and Internet Appendix outputs. Highlights:
+A single end-to-end run of the pipeline regenerates every figure and table in the paper and its Internet Appendix.
 
-**Main paper:** estimate-by-correlation figure (`est_by_cor.pdf`), Figure 1 panels (`fig1_b.pdf`), projection loadings (`proj_loadings.pdf`), ICC figures (`icc_all.pdf` / `icc_us.pdf` / `icc_gexus.pdf`), green-variable comparison (`gvars_comb.pdf`), bond figures (`bonds.pdf`, `bonds_ratingcontrol.pdf`), WACC figures (`wacc.pdf` / `wacc_g.pdf` / `wacc_all.pdf`), green-tilts (`green_tilts3.pdf`), the random-composite figures (`random_icc_t.pdf`, `random_average_MT.pdf`), plus tables `esg_variables.tex`, `est_by_cor_bs.tex`, `ccpi_reg_new.tex`.
 
-**Internet Appendix:** descriptive-statistics figures and tables, the `all_*` / `us_*` / `global_*` regression panels, the `bond_*` panels, individual-estimate tables, `realizedret.pdf`, `clustering.pdf`, the individual/decile/time-trend ICC figures, and `icc_hb.pdf`.
+# How to run the code
+
+Clone this repository to your local machine, set up the two language environments, place the raw data under `data/raw/` (see **Data** below), and run the pipeline.
 
 ## Requirements
 
-- **Python 3.13+** via [`uv`](https://docs.astral.sh/uv/) (pinned in `uv.lock`)
-- **R 4.5+** with packages pinned in `renv.lock` (managed by `renv`)
-- **poppler** (`pdftoppm`) for any rendering-based output checks
-- **~120 GB free disk** (≈30 GB raw data + pipeline intermediates + working set)
-- **~64 GB RAM** (the panel-OLS bootstraps are the heaviest step)
-- Local execution only — there is no cluster/SLURM path.
+- **Python 3.13+**, managed with [`uv`](https://docs.astral.sh/uv/) (exact versions pinned in `uv.lock`).
+- **R 4.5+**, with packages pinned in `renv.lock` (managed by [`renv`](https://rstudio.github.io/renv/)).
+- **poppler** (`pdftoppm`), used for output checks.
+- Roughly **120 GB of free disk** (≈30 GB of raw data plus pipeline intermediates) and **~64 GB of RAM** (the bootstrap steps are the most demanding).
 
-## Setup
+## Environment setup
 
 ```bash
-# Python environment
+# Python
 uv sync
 
-# R environment (renv required system-wide)
+# R (renv must be installed system-wide first)
 Rscript -e 'install.packages("renv"); renv::restore(prompt = FALSE)'
-
-# Place the raw inputs in data/raw/. They are not redistributed here;
-# data/CHECKSUMS.sha256 lists every expected file with its SHA-256.
 ```
+
+## Data
+
+The pipeline reads the raw inputs below. Each must be placed in the indicated
+folder under `data/raw/` with the exact filename shown. `data/CHECKSUMS.sha256`
+lists every expected file with its SHA-256 hash.
+
+- `data/raw/jkp/`
+    - `Characteristics.zip` — firm characteristics from the JKP Global Factor Data.
+    - `return_cutoffs.csv` — extreme-return cutoffs.
+    - `rf.csv` — risk-free rate.
+    - _(source: TODO — authors to complete)_
+- `data/raw/icc/`
+    - `icc_us.csv`, `icc_comp.csv` — implied cost of capital, US and global.
+    - `forward_eps_us.csv`, `forward_eps_comp.csv` — forward EPS forecasts, US and global.
+    - _(source: TODO — authors to complete)_
+- `data/raw/msci/`
+    - MSCI ESG ratings ("ESG Ratings Timeseries Expanded"), annual files 2007–2022 (`.xlsx` / `.csv`).
+    - _(source: TODO — authors to complete)_
+- `data/raw/sustainalytics/`
+    - `sust_indicator_all.zip`, `sust_legacy.zip`, `sust_ref_data.zip` — Sustainalytics ESG indicators and reference data.
+    - `G_NAMES.csv`, `IDS_TABLE.csv` — identifier/name tables.
+    - _(source: TODO — authors to complete)_
+- `data/raw/trucost/`
+    - `trucost.zip` — Trucost firm-level carbon-emissions data.
+    - _(source: TODO — authors to complete)_
+- `data/raw/morningstar/`
+    - `Morningstar_holdings_consolidated.csv`, `Morningstar_holdings_consolidated_notArticle9.csv`, `Morningstar_holdings_consolidated_notArticle9_US.csv` — fund holdings.
+    - `Sustainable_Funds_Processed.csv` — sustainable-funds classification.
+    - _(source: TODO — authors to complete)_
+- `data/raw/sers/`
+    - `subjective_er.csv`, `value_line.csv`, `morningstar.csv` — subjective / analyst expected-return data.
+    - _(source: TODO — authors to complete)_
+- `data/raw/vilkov_options/`
+    - `glb_daily.zip` — option-implied data (global daily).
+    - `MartinWagnerBounds.zip` — Martin–Wagner expected-return bounds.
+    - _(source: TODO — authors to complete)_
+- `data/raw/bonds/`
+    - `yields_traded_firm.csv` — corporate bond yields by firm.
+    - _(source: TODO — authors to complete)_
+- `data/raw/hoberg_phillips/`
+    - `tnic3_data.zip` — Hoberg–Phillips TNIC3 text-based industry network.
+    - _(source: TODO — authors to complete)_
+- `data/raw/ccpi/`
+    - `CCPI_data.xlsx` — Climate Change Performance Index country scores.
+    - _(source: TODO — authors to complete)_
+- `data/raw/linking/`
+    - `WRDS_GVKEY.csv`, `WRDS_ISIN.csv` — WRDS identifier linking tables.
+    - _(source: TODO — authors to complete)_
+- `data/raw/other/`
+    - `industry_codes.csv` — industry classification codes.
+    - `ME_Breakpoints.csv` — NYSE size (market-equity) breakpoints.
+    - `country_abbr.xlsx` — country abbreviations.
+    - _(source: TODO — authors to complete)_
 
 ## Run
 
@@ -40,13 +97,9 @@ Rscript -e 'install.packages("renv"); renv::restore(prompt = FALSE)'
 bash run.sh
 ```
 
-`run.sh` sources determinism settings (`SOURCE_DATE_EPOCH=0`, `PYTHONHASHSEED=0`, pinned matplotlib rc params, `LC_ALL=C.UTF-8`) and then runs the Python pipeline followed by the R post-processing:
+This sources the determinism settings in `scripts/env.sh` and then runs the two pipeline stages:
 
-1. `uv run python -u -m greenium.main` (≈ 3.5 h on a first `FULL_RUN=True` run; the bootstrap regeneration dominates)
-2. `Rscript R/main.R` (≈ 45 min)
+1. `uv run python -u -m greenium.main` — the main Python pipeline (≈ 3.5 h on a first run; the bootstrap regeneration dominates).
+2. `Rscript R/main.R` — the R post-processing (≈ 45 min).
 
-Outputs are written to `output/figures/` and `output/tables/`. To reuse cached intermediates on subsequent runs, set `FULL_RUN = False` in `greenium/config.py`.
-
-## Provenance
-
-This repository was created by pruning the combined-project repository at commit `2998f124d806338c9965f6c7b1e455e8abcc9a9b` down to only the code paths that produce this paper's figures and tables. The pipeline is deterministic on the pinned environment (`pyproject.toml`, `uv.lock`, `renv.lock`); R's `pdf()` device stamps wall-clock dates in PDF metadata, so consecutive runs match visually/numerically but are not byte-identical. The full per-edit pruning log and the figure/table verification reports are maintained separately in the project's private build-tracking repository.
+Figures are written to `output/figures/` and tables to `output/tables/`. To reuse cached intermediates instead of regenerating them from scratch, set `FULL_RUN = False` in `greenium/config.py`.
