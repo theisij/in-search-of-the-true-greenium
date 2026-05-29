@@ -1,0 +1,7 @@
+# matplotlibrc — overrides for deterministic PDF output.
+# Pointed at by $MATPLOTLIBRC in scripts/env.sh.
+
+pdf.compression: 0
+pdf.fonttype: 42
+ps.fonttype: 42
+svg.fonttype: none
