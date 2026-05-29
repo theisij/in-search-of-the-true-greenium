@@ -24,7 +24,6 @@ Clone this repository to your local machine, set up the two language environment
 
 - **Python 3.13+**, managed with [`uv`](https://docs.astral.sh/uv/) (exact versions pinned in `uv.lock`).
 - **R 4.5+**, with packages pinned in `renv.lock` (managed by [`renv`](https://rstudio.github.io/renv/)).
-- **poppler** (`pdftoppm`), used for output checks.
 - Roughly **120 GB of free disk** (≈30 GB of raw data plus pipeline intermediates) and **~64 GB of RAM** (the bootstrap steps are the most demanding).
 
 ## Environment setup
