@@ -70,18 +70,21 @@ from greenium.config import (
 from greenium.data_initial import load_all_data
 from greenium.utils import desc_table
 
-# loading data (either load or generate & save for next load; to re-run code from scratch, delete pickled files)
-try:
-    # Try loading files
+# Loading data, gated by FULL_RUN (config.py):
+#   FULL_RUN=True  -> regenerate all interim data from the raw inputs in
+#                     data/raw/ via load_all_data(), which also re-saves the
+#                     interim parquets for future FULL_RUN=False runs.
+#   FULL_RUN=False -> reuse the cached interim parquets from a previous
+#                     FULL_RUN=True run (much faster).
+if FULL_RUN:
+    print("FULL_RUN=True: regenerating interim data from raw inputs.")
+    df, df_bonds, holdings_agg, holdings_agg_bf = load_all_data()
+else:
+    print("FULL_RUN=False: loading cached interim data files.")
     df = pd.read_parquet(DATA_INTERIM / "df_main.parquet")
     df_bonds = pd.read_parquet(DATA_INTERIM / "df_bonds.parquet")
     holdings_agg = pl.read_parquet(DATA_INTERIM / "holdings_agg.parquet")
     holdings_agg_bf = pl.read_parquet(DATA_INTERIM / "holdings_agg_bf.parquet")
-    print("Interim data files loaded successfully.")
-except FileNotFoundError:
-    # If files don't exist, generate them
-    print("Interim data files not found. Running latest data pull.")
-    df, df_bonds, holdings_agg, holdings_agg_bf = load_all_data()
 
 #### NOTE: code includes plt.close("all") throughout in order to automatically close outputs created; can be deleted
 
