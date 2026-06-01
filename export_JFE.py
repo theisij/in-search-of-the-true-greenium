@@ -24,8 +24,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent
 
-# Outputs referenced by main_JFE.tex (25).
+# Outputs referenced by main_JFE.tex (26).
 JFE_MAIN = [
+    "output/figures/maps/estimate.svg",   # \includesvg{estimate.svg} — global greenium map
     "output/figures/global/est_by_cor.pdf",
     "output/figures/fig1_b.pdf",
     "output/tables/des_stats/esg_variables.tex",

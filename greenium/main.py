@@ -2,7 +2,9 @@
 import re
 import zipfile
 
+import geopandas as gpd
 import matplotlib as mpl
+import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,6 +53,7 @@ from greenium.config import (
     OUTPUT_FIGURES,
     OUTPUT_FIGURES_DESCRIPTIVES,
     OUTPUT_FIGURES_GLOBAL,
+    OUTPUT_FIGURES_MAPS,
     OUTPUT_FIGURES_US,
     OUTPUT_TABLES,
     OUTPUT_TABLES_DESCRIPTIVES,
@@ -2427,6 +2430,135 @@ wacc_all()
 pd.options.display.float_format = '{:.2f}'.format # changing float format to 2 decimals
 
 plt.close("all")
+# global icc map
+print('Greenium by country analysis...')
+def icc_country_map():
+    #icc by country with time FE (min 20 obs per country in each period) - icc slope scale capped to 80th percentile for visual purposes
+    test_data = df[df.date >= global_start]
+    test_data['country_ym'] = np.where(test_data['excntry'].notna(), test_data.excntry.astype(str) + test_data.eom.astype(str), np.nan)
+    test_data = test_data[test_data.green_score.notna()]
+    test_data = test_data[test_data.icc_avg.notna()]
+    test_data = test_data[test_data.gics6.notna()]
+    test_data = test_data.dropna(subset=['beta_252d', 'ebit_at', 'netdebt_at', 'log_be'])
+    test_data['country_ym_count'] = test_data.groupby('country_ym')['country_ym'].transform('count')
+    test_data = test_data[test_data.country_ym_count >= 20] #requiring at least 20 observations in a country-date to be included
+    test_data['country_date_count'] = test_data.groupby('excntry')['date'].transform('nunique')
+    test_data = test_data[test_data.country_date_count >= 12]  # requiring at least 12 unique dates per country
+
+    test_data['icc_avg'] = test_data['icc_avg']*100 #scaling to bps
+
+    test_data = test_data.set_index(['id', 'date'])
+    out = pd.DataFrame(index=test_data.excntry.drop_duplicates().sort_values(), columns=['estimate', 'stderror', 'tstat'])
+    for i in out.index:
+        print(i)
+        temp_data = test_data[test_data.excntry==i].copy()
+        reg = PanelOLS(temp_data['icc_avg'], sm.add_constant(temp_data[['green_score', 'beta_252d', 'ebit_at', 'netdebt_at', 'log_be']]), entity_effects=False, time_effects=True,
+                   other_effects=None, drop_absorbed=True, check_rank=False).fit(cov_type="clustered", cluster_entity=False, cluster_time=True, clusters=temp_data['gics'])
+
+        out.loc[i, 'estimate'] = reg.params.loc['green_score']
+        out.loc[i, 'stderror'] = reg.std_errors.loc['green_score']
+        out.loc[i, 'tstat'] = reg.tstats.loc['green_score']
+
+    out = out.reset_index()
+
+    def maps(out):
+        ##### global heatmaps of emission coefficients
+        country_list = pd.read_excel(DATA_RAW / "other" / "country_abbr.xlsx", sheet_name="Sheet1", usecols=['iso_3', 'Country'])
+
+        country_list = country_list.rename(
+            columns={'iso_3': 'excntry'})
+
+        out = out.merge(country_list, how='left', on=['excntry'])
+
+        # renaming to conform with data
+        out = out.replace('Czech Republic', 'Czechia')
+        out = out.replace('United States', 'United States of America')
+        out = out.replace('Korea, South', 'South Korea')
+        out = out.replace('Hong Kong (China)', 'Hong Kong')
+
+        # plotting coefficients and t-stats on global map
+        for loop_var in ['estimate', 'tstat']:
+            # Load a GeoDataFrame containing countries' geometry
+            if False:
+                # Download and save to data/raw
+                import requests
+                
+                url = "https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip"
+                zip_path = DATA_RAW / "other" / "countries.zip"
+                with requests.get(url, stream=True) as r:
+                    r.raise_for_status()
+                    with open(zip_path, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024*1024):
+                            f.write(chunk)
+
+                print(f"Downloaded countries ZIP to {zip_path}")
+                
+                # Old approach - download directly in script
+                # url = "https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip"
+                # world = gpd.read_file(url)
+            world = gpd.read_file(DATA_RAW / "other" / "countries.zip")
+            world = world[world.CONTINENT != "Antarctica"] #removing Antarctica
+
+            # now merging map data with estimates country-by-country
+            world = world.merge(out, how='left', left_on='NAME', right_on='Country')
+
+            # Define the colormap
+            #colormap = plt.cm.RdYlBu
+            colormap = plt.cm.BrBG.reversed() #reversed brown-to-green map
+            # Normalize the colormap
+            norm = mcolors.Normalize(vmin=world[loop_var].min(), vmax=world[loop_var].max())
+
+            sym_value = max(abs(world[loop_var].min()), abs(world[loop_var].max()))
+            norm = mcolors.Normalize(vmin=-sym_value, vmax=sym_value)   # symmetric
+
+            # capping axis at 80% percentile
+            if loop_var=='estimate':
+                norm = mcolors.Normalize(vmin=-abs(out[loop_var]).quantile(0.8),
+                                     vmax=abs(out[loop_var]).quantile(0.8))  # symmetric
+
+            # Function to apply color based on value
+            def apply_color(value):
+                if value == "nan":
+                    return 'lightgrey'  # Color for zero values
+                else:
+                    return mcolors.to_hex(colormap(norm(value)))  # Color for non-zero values
+
+            # Apply the color mapping function
+            world['color'] = world[loop_var].apply(apply_color)
+
+            world['color'] = world['color'].replace("#000000", 'lightgrey')
+
+            # Plot the merged DataFrame using the colors defined
+            fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+            world.plot(color=world['color'], ax=ax, legend=True)
+
+            # titles = {
+            #     'estimate': 'estimate: icc_avg',
+            #     'tstat': 'tstat: icc_avg',
+            # }
+
+            #title = titles.get(loop_var, "Default Title")  # Fallback to "Default Title" if not found
+
+            # Create a colorbar as a legend
+            sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
+            sm._A = []  # Empty array for the data range
+            #cbar = fig.colorbar(sm, ax=ax, orientation='horizontal', pad=0.1) 
+            fig.colorbar(sm, ax=ax, orientation='horizontal', pad=0.1)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            plt.tight_layout()
+
+            file_path = OUTPUT_FIGURES_MAPS / "{}.svg".format(loop_var)
+
+            plt.savefig(file_path)
+
+            plt.show()
+            plt.clf()
+        return None
+    maps(out)
+    return None
+icc_country_map()
+
 # green/brown country regression using CCPI
 def icc_country_ccpi():
     # loading ccpi data
