@@ -101,3 +101,8 @@ This sources the determinism settings in `scripts/env.sh` and then runs the two 
 2. `Rscript R/main.R` — the R post-processing (≈ 45 min).
 
 Figures are written to `output/figures/` and tables to `output/tables/`. To reuse cached intermediates instead of regenerating them from scratch, set `FULL_RUN = False` in `greenium/config.py`.
+
+
+# License
+
+The code in this repository is released under the MIT License (see `LICENSE`). The third-party data described under **Data** above are provided by their respective providers under separate licenses and are not redistributed here.
