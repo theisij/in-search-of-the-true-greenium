@@ -39,6 +39,12 @@ Old/
 !/data/raw/.gitkeep
 !/data/interim/.gitkeep
 !/data/processed/.gitkeep
+
+# …and except country_abbr.xlsx, a small static lookup table shipped with the repo
+# (re-include the dir so git descends, re-ignore its contents, then allow the one file).
+!/data/raw/other/
+/data/raw/other/*
+!/data/raw/other/country_abbr.xlsx
 !/output/figures/.gitkeep
 !/output/figures/des_stats/.gitkeep
 !/output/figures/global/.gitkeep
