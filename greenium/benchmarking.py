@@ -433,7 +433,7 @@ def df_impute_balanced(df, agg_var, indv_vars, gvars, ctrls, y, start):
     )
     return df_input
 
-# Estimate residual correlations (not working!!)
+# Estimate residual correlations
 def residualize(df_input, res_var, controls):
     """
     Residualize res_var on controls + time FE (country_ym_num),

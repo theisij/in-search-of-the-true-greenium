@@ -409,7 +409,7 @@ def prepare_additional(df, df_bonds):
 
     return df, df_bonds
 
-df, df_bonds = prepare_additional(df=df, df_bonds=df_bonds) # For Kelly Shue: df_bonds[['date', "gvkey", "debt_mv", "yield_adj", "me_company", "icc_avg", "wacc_icc_avg"]].to_csv('wacc.csv', index=False)
+df, df_bonds = prepare_additional(df=df, df_bonds=df_bonds)
 
 # ESG count table with descriptive statistics
 print('Descriptive statistics...')

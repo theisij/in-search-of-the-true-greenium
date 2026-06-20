@@ -235,7 +235,7 @@ def finalize_holdings_agg(holdings_raw, fund_info, df, isin_gvkey) -> pl.DataFra
     holdings_agg['share'] = holdings_agg['holding'] / holdings_agg['me']
     # Exclude observations with missing share
     holdings_agg = holdings_agg[holdings_agg['share'].notna()]
-    # Keep only ISIN with highest holding (ISSUE: multiple ISIN match to same ID. Not a big issue)
+    # Keep only the ISIN with the highest holding per firm-date (occasionally multiple ISINs map to one id)
     holdings_agg = (
         holdings_agg
         .sort_values(
