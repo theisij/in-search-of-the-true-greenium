@@ -32,15 +32,28 @@ Clone this repository to your local machine, set up the two language environment
 # Python
 uv sync
 
-# R (renv must be installed system-wide first)
-Rscript -e 'install.packages("renv"); renv::restore(prompt = FALSE)'
+# R (renv must be installed system-wide first; activate creates the project
+# library, and restore must run in a fresh session so it targets that library)
+Rscript -e 'install.packages("renv")'
+Rscript -e 'renv::activate()'
+Rscript -e 'renv::restore(prompt = FALSE)'
 ```
 
 ## Data
 
 The pipeline reads the raw inputs below. Each must be placed in the indicated
 folder under `data/raw/` with the exact filename shown. `data/CHECKSUMS.sha256`
-lists every expected file with its SHA-256 hash.
+lists every expected file with the SHA-256 hash of the real data used in the paper.
+
+This GitHub repository contains code only (`data/raw/` is git-ignored). The publicly
+redistributable inputs — `icc/`, `vilkov_options/`, `hoberg_phillips/`, `ccpi/`, and
+`other/` (except `industry_codes.csv` and `crsp_dsenames.csv`) — are deposited on
+Mendeley Data as part of the paper's replication package
+([doi:10.17632/sv8b78rkps](https://doi.org/10.17632/sv8b78rkps)) and should be
+copied into `data/raw/`. The remaining inputs are proprietary and must be
+obtained from the providers listed below; pseudo versions of them can be generated
+with a script in this repository so that the pipeline runs end to end (see
+**Pseudo data**).
 
 - `data/raw/jkp/`
     - `Characteristics.zip` — Global stock returns and firm characteristics.
@@ -88,6 +101,29 @@ lists every expected file with its SHA-256 hash.
     - `industry_codes.csv` — industry classification codes. Derived from the JKP data set.
     - `ME_Breakpoints.csv` — NYSE size (market-equity) breakpoints. From the [Kenneth R. French Data Library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html).
     - `country_abbr.xlsx` — country abbreviations. Ships with this repository (no download needed).
+    - `countries.zip` — world country boundaries (Natural Earth, 110m admin-0), used for the map in Figure 13. From [Natural Earth](https://www.naturalearthdata.com/downloads/110m-cultural-vectors/).
+    - `gics_names.xlsx` — GICS sector/industry names (sheet "Effective close of Mar 17 2023"). From the [MSCI GICS structure](https://www.msci.com/our-solutions/indexes/gics).
+    - `crsp_dsenames.csv` — CRSP daily stock event names file (`dsenames`), used for firm names in Figure 16. From [CRSP via WRDS](https://wrds-www.wharton.upenn.edu/).
+
+## Pseudo data
+
+The proprietary inputs cannot be redistributed. `scripts/make_pseudo_data.py`
+generates a synthetic stand-in for every proprietary file: same filenames, zip
+members, columns, and types, but random observations drawn from distributions
+recorded in `data/pseudo_schema.json` (which contains no identifiers or data values
+from the original files). The default universe is 1,000 firms in six countries
+over 2005–2022. A pre-generated copy (`raw_pseudo/`) is also included in the
+Mendeley Data deposit.
+
+```bash
+uv run python scripts/make_pseudo_data.py            # writes data/raw_pseudo/ (~100 MB, ~1 min)
+cp -r data/raw_pseudo/* data/raw/                    # alongside the public inputs above
+bash run.sh                                          # ≈ 45 min on the pseudo data
+```
+
+The run produces every figure and table listed under **List of tables and
+programs**, but the numbers will not match the paper. The checksums in
+`data/CHECKSUMS.sha256` apply to the real data only.
 
 ## Run
 
@@ -101,6 +137,76 @@ This sources the determinism settings in `scripts/env.sh` and then runs the two 
 2. `Rscript R/main.R` — the R post-processing (≈ 45 min).
 
 Figures are written to `output/figures/` and tables to `output/tables/`. To reuse cached intermediates instead of regenerating them from scratch, set `FULL_RUN = False` in `greenium/config.py`.
+
+
+# List of tables and programs
+
+The pipeline produces every figure and table in the paper and its Internet Appendix, except Table B1, which is hard-coded. Output paths are relative to `output/`; the program column gives the file and the line of the statement that writes the exhibit. `export_JFE.py` copies the files below into `output/JFE_main/` and `output/JFE_ia/`, renamed with a `_JFE_main` / `_JFE_ia` suffix, which is how they are referenced in the LaTeX sources.
+
+## Main text
+
+| Exhibit | Output file | Program (line) |
+|---|---|---|
+| Figure 1 | `figures/global/est_by_cor.pdf`, `figures/fig1_b.pdf` | `greenium/main.py` (364, 2931) |
+| Table 1 | `tables/des_stats/esg_variables.tex` | `greenium/main.py` (459) |
+| Figure 2 | `figures/global/proj_loadings.pdf` | `greenium/main.py` (224) |
+| Figure 3 | `figures/global/icc_all.pdf`, `figures/us/icc_us.pdf`, `figures/global/icc_gexus.pdf` | `greenium/main.py` (1227, 1278, 1329) |
+| Figure 4 | `figures/global/gvars_comb.pdf` | `greenium/main.py` (367) |
+| Figure 5 | `figures/global/individual_vs_aggregate_tstats.pdf` | `greenium/main.py` (303) |
+| Table 2 | `tables/global/est_by_cor_bs.tex` | `greenium/main.py` (355) |
+| Figure 6 | `figures/global/bm_t_unbalanced.pdf` | `greenium/main.py` (269) |
+| Figure 7 | `figures/random_icc_t.pdf`, `figures/random_average_MT.pdf` | `R/random_gs.R` (136, 289) |
+| Figure 8 | `figures/global/valrat_all.pdf` | `greenium/main.py` (1423) |
+| Figure 9 | `figures/us/er_options.pdf` | `greenium/main.py` (1521) |
+| Figure 10 | `figures/us/subj_ret.pdf` | `greenium/main.py` (1642) |
+| Figure 11 | `figures/global/icc_fm_all.pdf` | `greenium/main.py` (1911) |
+| Figure 12 | `figures/global/icc_timetrend_all.pdf` | `greenium/main.py` (2031) |
+| Figure 13 | `figures/maps/estimate.svg` | `greenium/main.py` (2551) |
+| Table 3 | `tables/global/ccpi_reg_new.tex` | `greenium/main.py` (2722) |
+| Figure 14 | `figures/us/bonds.pdf`, `figures/us/bonds_ratingcontrol.pdf` | `greenium/main.py` (1699, 1753) |
+| Figure 15 | `figures/us/wacc.pdf`, `figures/global/wacc_g.pdf`, `figures/global/wacc_all.pdf` | `greenium/main.py` (2240, 2331, 2422) |
+| Figure 16 | `figures/green_tilts3.pdf` | `R/green_tilts.R` (377) |
+
+## Internet Appendix
+
+| Exhibit | Output file | Program (line) |
+|---|---|---|
+| Table B1 | — | Hard-coded in the LaTeX source (`hardcoded/esg_variables_ref_MI_main_paper.tex`); not produced by the pipeline |
+| Figure B1 | `figures/des_stats/us_sample_nfirms.pdf`, `figures/des_stats/global_sample_nfirms.pdf`, `figures/des_stats/us_sample_nfirms_measures.pdf`, `figures/des_stats/global_sample_nfirms_measures.pdf` | `greenium/main.py` (540, 553, 567, 579) |
+| Table B2 | `tables/des_stats/esg_descriptives.tex` | `greenium/main.py` (106)¹ |
+| Table B3 | `tables/des_stats/agg_green_scores.tex` | `greenium/main.py` (475)¹ |
+| Table B4 | `tables/des_stats/firm_country_count.tex` | `greenium/main.py` (521) |
+| Table B5 | `tables/des_stats/char_descriptives.tex` | `greenium/main.py` (488)¹ |
+| Table B6 | `tables/des_stats/other_descriptives.tex` | `greenium/main.py` (495)¹ |
+| Table B7 | `tables/des_stats/option_descriptives.tex` | `greenium/main.py` (502)¹ |
+| Table B8 | `tables/des_stats/bond_descriptives.tex` | `greenium/main.py` (509)¹ |
+| Figure D1 | `figures/us/realizedret.pdf` | `greenium/main.py` (1032) |
+| Table E1 | `tables/all_0.tex` | `greenium/main.py` (773) |
+| Table E2 | `tables/all_1.tex` | `greenium/main.py` (775) |
+| Table E3 | `tables/all_2.tex` | `greenium/main.py` (777) |
+| Table E4 | `tables/us_0.tex` | `greenium/main.py` (761) |
+| Table E5 | `tables/us_1.tex` | `greenium/main.py` (763) |
+| Table E6 | `tables/us_2.tex` | `greenium/main.py` (765) |
+| Table E7 | `tables/global_0.tex` | `greenium/main.py` (767) |
+| Table E8 | `tables/global_1.tex` | `greenium/main.py` (769) |
+| Table E9 | `tables/global_2.tex` | `greenium/main.py` (771) |
+| Table E10 | `tables/bond_0.tex` | `greenium/main.py` (947) |
+| Table E11 | `tables/bond_1.tex` | `greenium/main.py` (952) |
+| Table E12 | `tables/bond_2.tex` | `greenium/main.py` (957) |
+| Table E13 | `tables/bond_3.tex` | `greenium/main.py` (962) |
+| Table E14 | `tables/bond_4.tex` | `greenium/main.py` (967) |
+| Table E15 | `tables/bond_5.tex` | `greenium/main.py` (972) |
+| Table E16 | `tables/global/individual_estimates.tex` | `greenium/main.py` (359) |
+| Table E17 | `tables/global/individual_estimates_unbalanced.tex` | `greenium/main.py` (359) |
+| Table E18 | `tables/global/individual_estimates_unbalanced_raw.tex` | `greenium/main.py` (145) |
+| Table E19 | `tables/global/est_by_cor_bs_unbalanced.tex` | `greenium/main.py` (355) |
+| Figure F1 | `figures/clustering.pdf` | `R/standard_errors.R` (91) |
+| Figure G1 | `figures/global/icc_all_indv.pdf` | `greenium/main.py` (1128) |
+| Figure G2 | `figures/global/icc_timetrend_all_indv.pdf` | `greenium/main.py` (2103) |
+| Figure G3 | `figures/global/icc_deciles_all.pdf` | `greenium/main.py` (1849) |
+| Figure G4 | `figures/us/icc_hb.pdf` | `greenium/main.py` (2860) |
+
+¹ Summary-statistics tables are written by the helper `desc_table` in `greenium/utils.py` (line 42); the line given is the call site that names the output file.
 
 
 # License

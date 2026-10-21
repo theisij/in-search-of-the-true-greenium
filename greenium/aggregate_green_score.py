@@ -239,8 +239,8 @@ def finalize_holdings_agg(holdings_raw, fund_info, df, isin_gvkey) -> pl.DataFra
     holdings_agg = (
         holdings_agg
         .sort_values(
-            by=["excntry", "id", "date", "holding"],
-            ascending=[True, True, True, False],
+            by=["excntry", "id", "date", "holding", "isin"],
+            ascending=[True, True, True, False, True],  # isin breaks exact holding ties deterministically
         )
         .drop_duplicates(subset=["excntry", "id", "date"], keep="first")
         .reset_index(drop=True)

@@ -119,7 +119,7 @@ if(green_brown_industry_split) {
 
 
 # Green-minus-brown ----------
-green_scores[, pf := ceiling(3*ecdf(green_score)(green_score)), by = eom]
+green_scores[, pf := ceiling(3*ecdf(round(green_score, 10))(round(green_score, 10))), by = eom]  # round: ~200 firms/month have a score of exactly zero up to floating-point residue (~1e-17); without rounding, run-to-run residue noise reorders them around the tercile cut
 # Green score
 gmb_pf <- green_scores[!is.na(me) & !is.na(green_score), .(
   # ew = mean(green_score),

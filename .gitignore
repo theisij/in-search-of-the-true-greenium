@@ -26,6 +26,8 @@ Old/
 
 # ignore everything in these folders...
 /data/raw/*
+/data/raw_pseudo/
+/mendeley_v2/
 /data/interim/*
 /data/processed/*
 /output/figures/*
