@@ -1444,7 +1444,7 @@ def options_plot():
     positions = [1]
     ax1.errorbar(data_list, positions, xerr=1.96 * standard_errors, fmt='o', color='green', capsize=5, linestyle='None')
 
-    ax1.set_title('Country-Time FE')
+    ax1.set_title('Time FE')
     ax1.set_yticks(positions)
     ax1.set_yticklabels(data_labels)
     ax1.axvline(0, color='black', alpha=0.5, linewidth=1)
