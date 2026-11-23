@@ -2656,8 +2656,8 @@ def icc_country_ccpi():
     stargazer.add_line(
         "$R$$^2$",
         [
-        f"{reg_1.rsquared_overall:.0%}".replace("%", r"\%"),
-        f"{reg_2.rsquared_overall:.0%}".replace("%", r"\%")
+        f"{reg_1.rsquared_inclusive:.0%}".replace("%", r"\%"),
+        f"{reg_2.rsquared_inclusive:.0%}".replace("%", r"\%")
         ]
     )
     stargazer.add_line("\\hline", ["",""])
