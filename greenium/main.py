@@ -2908,7 +2908,7 @@ def fig_1_b():
         plt.bar(categories[2], values[2], bottom=values[1], yerr=errors[2], capsize=5, color='slategrey') #Green countries on top
 
         # Over time 
-        plt.bar(categories[3], values[3], yerr=errors[4], capsize=5, color='orange') #Baseline
+        plt.bar(categories[3], values[3], yerr=errors[3], capsize=5, color='orange') #Baseline
         plt.bar(categories[4], values[3], yerr=None, capsize=5, color='orange', alpha=0.2)  #Shaded baseline
         plt.bar(categories[4], values[4], bottom=values[3], yerr=errors[4], capsize=5, color='orange') #End of sample
 
