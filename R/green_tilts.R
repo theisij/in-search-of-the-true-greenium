@@ -170,6 +170,10 @@ print(paste0("Expected t-stat for US GMB: ", round(exp_t, 2)))
 yr_to_sig <- (1.96 / (exp_sr))^2
 print(paste0("Years to 1.96 t-stat for US GMB: ", round(yr_to_sig, 2)))
 
+# Expected return for global GMB (Green minus Brown in Figure 16)
+exp_ret_global <- gmb$green_score * greenium_est
+print(paste0("Expected return for global GMB: ", round(exp_ret_global, 2), "%"))
+
 # S&P500 ---------------------
 if (FALSE) {
   green_scores[sp500==T, .N, by = eom] |> ggplot(aes(eom, N)) + geom_point()

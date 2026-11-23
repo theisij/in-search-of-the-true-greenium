@@ -165,7 +165,7 @@ The pipeline produces every figure and table in the paper and its Internet Appen
 | Table 3 | `tables/global/ccpi_reg_new.tex` | `greenium/main.py` (2722) |
 | Figure 14 | `figures/us/bonds.pdf`, `figures/us/bonds_ratingcontrol.pdf` | `greenium/main.py` (1699, 1753) |
 | Figure 15 | `figures/us/wacc.pdf`, `figures/global/wacc_g.pdf`, `figures/global/wacc_all.pdf` | `greenium/main.py` (2240, 2331, 2422) |
-| Figure 16 | `figures/green_tilts3.pdf` | `R/green_tilts.R` (377) |
+| Figure 16 | `figures/green_tilts3.pdf` | `R/green_tilts.R` (381) |
 
 ## Internet Appendix
 
