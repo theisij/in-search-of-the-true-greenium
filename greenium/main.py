@@ -548,7 +548,7 @@ def des_plots():
     plt.plot(df[df.excntry!="USA"].groupby('date')['total_esg_score'].count(), label='Sustainalytics', color='tab:orange')
     plt.plot(df[df.excntry!="USA"].groupby('date')['scope1int_sales'].count(), label='Trucost', color='tab:purple')
     plt.xlim(pd.to_datetime('2007-01-01'), pd.to_datetime('2022-12-31'))
-    plt.title('Global Sample Coverage')
+    plt.title('Global ex-US Sample Coverage')
     plt.tight_layout()
     plt.savefig(OUTPUT_FIGURES_DESCRIPTIVES / "global_sample_nfirms.pdf", format="pdf",
                 bbox_inches="tight")
@@ -574,7 +574,7 @@ def des_plots():
     plt.plot(df[(df.excntry!="USA") & (df.green_score.notna())].groupby('date')['ep_fwd1'].count(), label='E/P (FY+1)', color='tab:cyan')
     plt.plot(df[(df.excntry!="USA") & (df.green_score.notna())].groupby('date')['be_me'].count(), label='B/M', color='tab:brown')
     plt.xlim(pd.to_datetime('2007-01-01'), pd.to_datetime('2022-12-31'))
-    plt.title('Global Sample with Aggregate Green Score')
+    plt.title('Global ex-US Sample with Aggregate Green Score')
     plt.tight_layout()
     plt.savefig(OUTPUT_FIGURES_DESCRIPTIVES / "global_sample_nfirms_measures.pdf", format="pdf",
                 bbox_inches="tight")
